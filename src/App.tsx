@@ -48,11 +48,11 @@ export default function App() {
   // Sign In Form States
   const [signInData, setSignInData] = useState({ email: '', password: '' });
 
-  // Conversational Sign-Up State (4 Steps now: Plan -> Personal -> Business -> Security)
+  // Conversational Sign-Up State (4 Steps: Plan -> Personal -> Business -> Security)
   const [signupStep, setSignupStep] = useState(1);
   const [formData, setFormData] = useState({
     planId: 1,
-    planName: 'Starter',
+    planName: 'Starter Plan',
     fullName: '',
     companyName: '',
     email: '',
@@ -197,7 +197,8 @@ export default function App() {
       price: "₦15,000",
       period: "per month",
       desc: "Ideal for growing single-counter retail shops and boutiques.",
-      users: "Up to 3 Staff Users",
+      branches: "1 Store Branch",
+      usersPerBranch: "Up to 3 Users per Branch",
       customers: "500 Saved Customers",
       transactions: "1,000 Monthly Transactions",
       highlight: false
@@ -207,8 +208,9 @@ export default function App() {
       name: "Professional Plan",
       price: "₦45,000",
       period: "per month",
-      desc: "Perfect for supermarkets and multi-branch retail stores.",
-      users: "Up to 10 Staff Users",
+      desc: "Perfect for supermarkets and growing multi-branch retail chains.",
+      branches: "Up to 3 Store Branches",
+      usersPerBranch: "Up to 5 Users per Branch",
       customers: "5,000 Saved Customers",
       transactions: "10,000 Monthly Transactions",
       highlight: true
@@ -218,8 +220,9 @@ export default function App() {
       name: "Enterprise Plan",
       price: "₦120,000",
       period: "per month",
-      desc: "Built for large wholesale distributors and corporate chains.",
-      users: "Up to 50 Staff Users",
+      desc: "Built for large wholesale distributors and corporate networks.",
+      branches: "Up to 10 Store Branches",
+      usersPerBranch: "Up to 10 Users per Branch",
       customers: "50,000 Saved Customers",
       transactions: "100,000 Monthly Transactions",
       highlight: false
@@ -356,7 +359,7 @@ export default function App() {
               {signupStep === 4 && "Secure your SaaS instance"}
             </h2>
             <p className="text-sm text-slate-400 mb-8">
-              {signupStep === 1 && `You selected the ${formData.planName} Plan. All 8 modules are included!`}
+              {signupStep === 1 && `You selected the ${formData.planName}. All 8 modules are included!`}
               {signupStep === 2 && "Please enter your name and professional contact email."}
               {signupStep === 3 && "We need your store name, phone number, and branch address."}
               {signupStep === 4 && "Create a secure password with live strength verification."}
@@ -366,10 +369,10 @@ export default function App() {
               {signupStep === 1 && (
                 <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">{formData.planName} Plan</span>
+                    <span className="text-sm font-bold text-white">{formData.planName}</span>
                     <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">Active Selection</span>
                   </div>
-                  <p className="text-xs text-slate-400">Includes all 8 enterprise POS modules, offline SQLite/IndexedDB caching, and B2B invoicing.</p>
+                  <p className="text-xs text-slate-400">Includes branch allocation management, cashier RBAC, and all 8 enterprise modules.</p>
                   <button 
                     type="button" 
                     onClick={() => {
@@ -728,7 +731,7 @@ export default function App() {
 
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
             <a href="#features" className="hover:text-emerald-400 transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-emerald-400 transition-colors">Plans</a>
+            <a href="#pricing" className="hover:text-emerald-400 transition-colors">Plans & Allocation</a>
             <a href="#workflow" className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
             <a href="#architecture" className="hover:text-emerald-400 transition-colors">Tech Stack</a>
           </nav>
@@ -762,7 +765,7 @@ export default function App() {
           <div className="md:hidden bg-slate-900 border-b border-slate-800 px-6 py-6 space-y-4 shadow-2xl animate-in slide-in-from-top duration-200">
             <nav className="flex flex-col space-y-4 text-base font-medium text-slate-300">
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Features</a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Plans</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Plans & Allocation</a>
               <a href="#workflow" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
               <a href="#architecture" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Tech Stack</a>
             </nav>
@@ -789,15 +792,15 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-8 animate-pulse">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Next-Generation Multi-Tenant POS & Invoicing Platform in ₦ Naira</span>
+            <span>Multi-Branch & Cashier RBAC Allocation in ₦ Naira</span>
           </div>
           
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-            The Ultimate <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Point of Sale</span> & B2B Suite for Nigerian Businesses
+            The Ultimate <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Multi-Branch POS</span> & B2B Suite
           </h1>
           
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-normal">
-            Empower your retail stores, supermarkets, and wholesale businesses with real-time inventory, offline cashier terminals in ₦, and seamless quotation-to-invoice workflows.
+            Easily create physical store branches, allocate cashiers and administrators per branch, and manage real-time inventory across your enterprise.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -812,25 +815,25 @@ export default function App() {
               href="#pricing"
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-base transition-all text-center"
             >
-              View Pricing Plans
+              View Branch & User Tiers
             </a>
           </div>
         </div>
       </section>
 
-      {/* Subscription Plans Section */}
+      {/* Subscription Plans Section with Branch & User Limits */}
       <section id="pricing" className="py-24 bg-slate-950 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Flexible Scaling Tiers</span>
+              <span>Multi-Store & Staff Allocation Tiers</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-              Choose the Plan That Fits Your Scale
+              Plans Based on Branches & Staff Allocation
             </h2>
             <p className="mt-4 text-slate-400 text-base">
-              Every plan includes <strong>all 8 enterprise modules</strong>. Choose your tier based on staff users, customer directory capacity, and monthly transaction volume.
+              All plans include <strong>all 8 enterprise modules</strong>. Select your tier based on your store branch network and cashier allocations.
             </p>
           </div>
 
@@ -856,7 +859,11 @@ export default function App() {
                   <div className="space-y-3 pt-4 border-t border-slate-800 mb-8 text-sm text-slate-300">
                     <div className="flex items-center space-x-3">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{plan.users}</span>
+                      <span className="font-semibold text-emerald-400">{plan.branches}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-semibold text-emerald-400">{plan.usersPerBranch}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -865,10 +872,6 @@ export default function App() {
                     <div className="flex items-center space-x-3">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>{plan.transactions}</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>All 8 Core POS & B2B Modules</span>
                     </div>
                   </div>
                 </div>
@@ -893,7 +896,7 @@ export default function App() {
               Packed with Advanced Enterprise Features
             </h2>
             <p className="mt-4 text-slate-400 text-base sm:text-lg">
-              Every tool your subscribers need to run retail counters, manage multi-branch stock, and close B2B enterprise deals denominated in Naira.
+              Every tool your organization needs to manage branch networks, cashiers, and inventory.
             </p>
           </div>
 
