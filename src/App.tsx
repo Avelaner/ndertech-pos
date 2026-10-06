@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import { 
   ShoppingCart, 
   Package, 
@@ -42,6 +43,9 @@ export default function App() {
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
+  // Sign In Form States
+  const [signInData, setSignInData] = useState({ email: '', password: '' });
+
   // Conversational Sign-Up State
   const [signupStep, setSignupStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -71,14 +75,96 @@ export default function App() {
   const hasSymbol = /[^A-Za-z0-9]/.test(pwd);
   const isPasswordValid = hasLength && hasUppercase && hasNumber && hasSymbol;
 
-  const handleNextStep = (e: React.FormEvent) => {
+  // Handle Tenant Registration Form Submission
+  const handleNextStep = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signupStep < 3) {
       setSignupStep(signupStep + 1);
     } else {
       if (!isPasswordValid) return;
-      alert(`Tenant instance for ${formData.companyName} initialized securely! Welcome, ${formData.fullName}.`);
-      setCurrentView('signin');
+      
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          Swal.fire({
+            title: 'Success!',
+            text: data.message || `Tenant instance for ${formData.companyName} initialized successfully!`,
+            icon: 'success',
+            confirmButtonColor: '#059669',
+            background: '#0f172a',
+            color: '#f8fafc'
+          });
+          setCurrentView('signin');
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: data.message || 'Registration failed.',
+            icon: 'error',
+            confirmButtonColor: '#059669',
+            background: '#0f172a',
+            color: '#f8fafc'
+          });
+        }
+      } catch (err) {
+        console.error('Network error during registration:', err);
+        Swal.fire({
+          title: 'Connection Error',
+          text: 'Failed to connect to the backend server.',
+          icon: 'error',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      }
+    }
+  };
+
+  // Handle User Sign-In Submission
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', ...signInData })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        Swal.fire({
+          title: 'Welcome Back!',
+          text: `Login successful. Welcome, ${data.user.name}.`,
+          icon: 'success',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      } else {
+        Swal.fire({
+          title: 'Access Denied',
+          text: data.message || 'Invalid email or password.',
+          icon: 'warning',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      }
+    } catch (err) {
+      console.error('Sign-in error:', err);
+      Swal.fire({
+        title: 'Connection Error',
+        text: 'Failed to connect to backend sign-in service.',
+        icon: 'error',
+        confirmButtonColor: '#059669',
+        background: '#0f172a',
+        color: '#f8fafc'
+      });
     }
   };
 
@@ -125,12 +211,19 @@ export default function App() {
             <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
             <p className="text-sm text-slate-400 mb-8">Sign in to your NderTech POS SaaS dashboard.</p>
 
-            <form onSubmit={(e) => { e.preventDefault(); alert('Sign-in endpoint connected successfully!'); }} className="space-y-4">
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email Address</label>
                 <div className="relative">
                   <Mail className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
-                  <input type="email" required placeholder="name@company.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                  <input 
+                    type="email" 
+                    required 
+                    value={signInData.email}
+                    onChange={(e) => setSignInData({...signInData, email: e.target.value})}
+                    placeholder="name@company.com" 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                  />
                 </div>
               </div>
 
@@ -146,6 +239,8 @@ export default function App() {
                   <input 
                     type={showSignInPassword ? "text" : "password"} 
                     required 
+                    value={signInData.password}
+                    onChange={(e) => setSignInData({...signInData, password: e.target.value})}
                     placeholder="••••••••" 
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 pr-12 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
                   />
@@ -452,7 +547,18 @@ export default function App() {
             <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
             <p className="text-sm text-slate-400 mb-8">Enter your work email address and we'll send you instructions to reset your password.</p>
 
-            <form onSubmit={(e) => { e.preventDefault(); alert('Password reset instructions sent to your email!'); navigateTo('signin'); }} className="space-y-4">
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              Swal.fire({
+                title: 'Check Your Email',
+                text: 'Password reset instructions sent to your email!',
+                icon: 'success',
+                confirmButtonColor: '#059669',
+                background: '#0f172a',
+                color: '#f8fafc'
+              });
+              navigateTo('signin'); 
+            }} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Work Email</label>
                 <div className="relative">
