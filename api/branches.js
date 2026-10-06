@@ -24,6 +24,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ACTION: CREATE BRANCH
     if (req.method === 'POST' && req.query.action === 'create_branch') {
       const { branchName, address, phone } = req.body;
 
@@ -52,8 +53,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Branch created successfully!', branch: newBranch.rows[0] });
     }
 
+    // ACTION: ALLOCATE / CREATE STAFF USER FOR A BRANCH
     if (req.method === 'POST' && req.query.action === 'create_user') {
-      const { branchId, roleId, name, email, password } = req.body;
+      let { branchId, roleId, name, email, password } = req.body;
+
+      // Map string roles to integers if roleId is passed as string
+      if (roleId === 'admin') roleId = 1;
+      else if (roleId === 'cashier' || !roleId) roleId = 2;
+      else roleId = parseInt(roleId) || 2;
 
       const planCheck = await pool.query(
         `SELECT p.max_users_per_branch FROM tenants t 
@@ -83,6 +90,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Staff allocated to branch successfully!', user: newUser.rows[0] });
     }
 
+    // ACTION: FETCH BRANCHES & STAFF
     if (req.method === 'GET') {
       const branches = await pool.query('SELECT * FROM branches WHERE tenant_id = $1', [tenantId]);
       const users = await pool.query('SELECT id, name, email, branch_id, role_id, status FROM users WHERE tenant_id = $1', [tenantId]);
