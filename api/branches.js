@@ -1,8 +1,10 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
+const connectionString = process.env.DATABASE_URL || process.env.ndertech_POSTGRES_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: { rejectUnauthorized: false }
 });
 

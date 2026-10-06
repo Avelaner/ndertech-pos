@@ -1,8 +1,10 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
+const connectionString = process.env.DATABASE_URL || process.env.ndertech_POSTGRES_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: { rejectUnauthorized: false }
 });
 
@@ -38,8 +40,8 @@ export default async function handler(req, res) {
     const subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(password, salt);
 
     // Insert into tenants table including subscription_plan_id
     const tenantResult = await pool.query(
@@ -72,6 +74,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Registration Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Internal server error during registration.' });
+    return res.status(500).json({ success: false, message: error.message || 'Database connection error during registration.' });
   }
 }

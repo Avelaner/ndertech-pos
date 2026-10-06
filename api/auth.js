@@ -1,8 +1,10 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
+const connectionString = process.env.DATABASE_URL || process.env.ndertech_POSTGRES_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: { rejectUnauthorized: false }
 });
 
@@ -25,7 +27,7 @@ export default async function handler(req, res) {
       }
 
       const user = userResult.rows[0];
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      const isPasswordValid = bcrypt.compareSync(password, user.password_hash);
 
       if (!isPasswordValid) {
         return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -41,6 +43,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid action.' });
   } catch (error) {
     console.error('Auth Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error during authentication.' });
+    return res.status(500).json({ success: false, message: error.message || 'Database connection error during authentication.' });
   }
 }
