@@ -32,28 +32,27 @@ import {
   Check,
   LayoutDashboard,
   LogOut,
-  PlusCircle,
   UserPlus
 } from 'lucide-react';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'signin' | 'signup' | 'forgot' | 'dashboard'>('landing');
+  const [currentView, setCurrentView] = useState('landing');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Authenticated User State
-  const [loggedInUser, setLoggedInUser] = useState<{ id: string; name: string; email: string; tenantId: string; role?: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'pos' | 'inventory' | 'branches' | 'invoices' | 'reports'>('overview');
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Dashboard Management State (Branches & Staff)
-  const [branches, setBranches] = useState<any[]>([]);
-  const [staffUsers, setStaffUsers] = useState<any[]>([]);
+  const [branches, setBranches] = useState([]);
+  const [staffUsers, setStaffUsers] = useState([]);
   const [newBranchData, setNewBranchData] = useState({ branchName: '', address: '', phone: '' });
   const [newStaffData, setNewStaffData] = useState({ branchId: '', name: '', email: '', password: '', roleId: 'cashier' });
 
   // Legal Modal States for Sign Up
-  const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const [activeLegalModal, setActiveLegalModal] = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Password visibility states
@@ -76,14 +75,14 @@ export default function App() {
     password: ''
   });
 
-  const sanitizeInput = (value: string) => value.replace(/[<>]/g, '');
+  const sanitizeInput = (value) => value.replace(/[<>]/g, '');
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     const sanitized = sanitizeInput(value);
     setFormData(prev => ({ ...prev, [field]: sanitized }));
   };
 
-  const selectPlanAndStart = (id: number, name: string) => {
+  const selectPlanAndStart = (id, name) => {
     setFormData(prev => ({ ...prev, planId: id, planName: name }));
     setCurrentView('signup');
     setSignupStep(1);
@@ -97,7 +96,7 @@ export default function App() {
   const isPasswordValid = hasLength && hasUppercase && hasNumber && hasSymbol;
 
   // Handle Tenant Registration Form Submission
-  const handleNextStep = async (e: React.FormEvent) => {
+  const handleNextStep = async (e) => {
     e.preventDefault();
     if (signupStep < 4) {
       setSignupStep(signupStep + 1);
@@ -149,7 +148,7 @@ export default function App() {
   };
 
   // Handle User Sign-In Submission & Load Dashboard Data
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -196,7 +195,7 @@ export default function App() {
     }
   };
 
-  const fetchDashboardData = async (tenantId: string) => {
+  const fetchDashboardData = async (tenantId) => {
     try {
       const res = await fetch('/api/branches', {
         headers: { 'Tenant-Id': tenantId }
@@ -211,7 +210,7 @@ export default function App() {
     }
   };
 
-  const handleCreateBranch = async (e: React.FormEvent) => {
+  const handleCreateBranch = async (e) => {
     e.preventDefault();
     if (!loggedInUser) return;
 
@@ -234,7 +233,7 @@ export default function App() {
     }
   };
 
-  const handleCreateStaff = async (e: React.FormEvent) => {
+  const handleCreateStaff = async (e) => {
     e.preventDefault();
     if (!loggedInUser) return;
 
@@ -257,7 +256,7 @@ export default function App() {
     }
   };
 
-  const navigateTo = (view: 'landing' | 'signin' | 'signup' | 'forgot' | 'dashboard') => {
+  const navigateTo = (view) => {
     setCurrentView(view);
     setMobileMenuOpen(false);
     if (view === 'signup') setSignupStep(1);
@@ -275,7 +274,6 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row selection:bg-emerald-500 selection:text-white">
         
-        {/* Mobile Sidebar Toggle Header */}
         <div className="md:hidden flex items-center justify-between bg-slate-900 border-b border-slate-800 px-4 py-4 sticky top-0 z-40">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
@@ -288,7 +286,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Responsive Sidebar */}
         <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div>
             <div className="hidden md:flex items-center space-x-3 mb-8">
@@ -346,10 +343,8 @@ export default function App() {
           </div>
         </aside>
 
-        {/* Main Dashboard Content Area */}
         <main className="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 sm:p-8">
           
-          {/* Top Navbar */}
           <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-slate-800 space-y-4 sm:space-y-0">
             <div>
               <h1 className="text-2xl font-black text-white capitalize">{activeTab.replace('_', ' ')}</h1>
@@ -362,7 +357,6 @@ export default function App() {
             </div>
           </header>
 
-          {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -390,11 +384,9 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: BRANCHES & STAFF ALLOCATION */}
           {activeTab === 'branches' && (
             <div className="space-y-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Create Branch Card */}
                 <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
                     <Building className="w-5 h-5 text-emerald-400" />
@@ -419,7 +411,6 @@ export default function App() {
                   </form>
                 </div>
 
-                {/* Allocate Staff Card */}
                 <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
                     <UserPlus className="w-5 h-5 text-emerald-400" />
@@ -452,7 +443,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Existing Branches Table */}
               <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
                 <h3 className="text-lg font-bold text-white mb-4">Store Branches Network ({branches.length})</h3>
                 <div className="overflow-x-auto">
@@ -481,7 +471,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: POS TERMINAL */}
           {activeTab === 'pos' && (
             <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center">
               <ShoppingCart className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
@@ -493,7 +482,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: INVENTORY */}
           {activeTab === 'inventory' && (
             <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center">
               <Package className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
@@ -505,7 +493,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: INVOICES */}
           {activeTab === 'invoices' && (
             <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center">
               <FileText className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
@@ -517,7 +504,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: REPORTS */}
           {activeTab === 'reports' && (
             <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center">
               <BarChart3 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
@@ -775,7 +761,6 @@ export default function App() {
         )}
       </header>
 
-      {/* Hero */}
       <section className="relative pt-20 pb-32 text-center px-4">
         <h1 className="text-4xl sm:text-6xl font-extrabold text-white max-w-4xl mx-auto leading-tight">
           Multi-Branch POS & Staff Allocation Suite in <span className="text-emerald-400">₦ Naira</span>
@@ -788,7 +773,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Pricing */}
       <section id="pricing" className="py-24 bg-slate-900/50 border-t border-slate-900 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-white text-center mb-16">Plans Based on Branches & Staff</h2>
