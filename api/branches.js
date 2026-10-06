@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
@@ -22,11 +24,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ACTION: CREATE BRANCH
     if (req.method === 'POST' && req.query.action === 'create_branch') {
       const { branchName, address, phone } = req.body;
 
-      // Check tenant's subscription plan branch limit
       const planCheck = await pool.query(
         `SELECT p.max_branches FROM tenants t 
          JOIN subscription_plans p ON t.subscription_plan_id = p.id 
@@ -52,11 +52,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Branch created successfully!', branch: newBranch.rows[0] });
     }
 
-    // ACTION: ALLOCATE / CREATE STAFF USER FOR A BRANCH
     if (req.method === 'POST' && req.query.action === 'create_user') {
       const { branchId, roleId, name, email, password } = req.body;
 
-      // Check tenant's users-per-branch limit
       const planCheck = await pool.query(
         `SELECT p.max_users_per_branch FROM tenants t 
          JOIN subscription_plans p ON t.subscription_plan_id = p.id 
@@ -85,7 +83,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Staff allocated to branch successfully!', user: newUser.rows[0] });
     }
 
-    // ACTION: FETCH BRANCHES & STAFF
     if (req.method === 'GET') {
       const branches = await pool.query('SELECT * FROM branches WHERE tenant_id = $1', [tenantId]);
       const users = await pool.query('SELECT id, name, email, branch_id, role_id, status FROM users WHERE tenant_id = $1', [tenantId]);

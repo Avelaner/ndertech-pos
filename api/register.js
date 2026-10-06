@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
@@ -9,7 +11,6 @@ const pool = new Pool({
 });
 
 export default async function handler(req, res) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -30,20 +31,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
-    // Check if tenant/email already exists
     const existingTenant = await pool.query('SELECT id FROM tenants WHERE email = $1', [email]);
     if (existingTenant.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
     }
 
-    // Generate a clean lowercase subdomain from company name
     const subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
-
-    // Hash password
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
 
-    // Insert into tenants table including subscription_plan_id
     const tenantResult = await pool.query(
       `INSERT INTO tenants (company_name, subdomain, email, phone, address, subscription_plan_id, status) 
        VALUES ($1, $2, $3, $4, $5, $6, 'trial') RETURNING id`,
@@ -51,7 +47,6 @@ export default async function handler(req, res) {
     );
     const tenantId = tenantResult.rows[0].id;
 
-    // Create a main branch for the tenant
     const branchResult = await pool.query(
       `INSERT INTO branches (tenant_id, branch_name, address, phone, is_main) 
        VALUES ($1, $2, $3, $4, TRUE) RETURNING id`,
@@ -59,7 +54,6 @@ export default async function handler(req, res) {
     );
     const branchId = branchResult.rows[0].id;
 
-    // Insert user into users table linked to this tenant and branch
     await pool.query(
       `INSERT INTO users (tenant_id, branch_id, name, email, password_hash, status) 
        VALUES ($1, $2, $3, $4, $5, 'active')`,
