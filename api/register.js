@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { fullName, companyName, email, phone, address, password } = req.body;
+    const { fullName, companyName, email, phone, address, password, planId } = req.body;
 
     if (!fullName || !companyName || !email || !password) {
       return res.status(400).json({ success: false, message: 'Missing required fields.' });
@@ -41,11 +41,11 @@ export default async function handler(req, res) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Insert into tenants table
+    // Insert into tenants table including subscription_plan_id
     const tenantResult = await pool.query(
-      `INSERT INTO tenants (company_name, subdomain, email, phone, address, status) 
-       VALUES ($1, $2, $3, $4, $5, 'trial') RETURNING id`,
-      [companyName, subdomain, email, phone, address]
+      `INSERT INTO tenants (company_name, subdomain, email, phone, address, subscription_plan_id, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, 'trial') RETURNING id`,
+      [companyName, subdomain, email, phone, address, planId || 1]
     );
     const tenantId = tenantResult.rows[0].id;
 
@@ -72,6 +72,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Registration Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error during registration.' });
+    return res.status(500).json({ success: false, message: error.message || 'Internal server error during registration.' });
   }
 }

@@ -28,12 +28,14 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  AlertCircle
+  Loader2,
+  Check
 } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer'>('landing');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Legal Modal States for Sign Up
   const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
@@ -46,9 +48,11 @@ export default function App() {
   // Sign In Form States
   const [signInData, setSignInData] = useState({ email: '', password: '' });
 
-  // Conversational Sign-Up State
+  // Conversational Sign-Up State (4 Steps now: Plan -> Personal -> Business -> Security)
   const [signupStep, setSignupStep] = useState(1);
   const [formData, setFormData] = useState({
+    planId: 1,
+    planName: 'Starter',
     fullName: '',
     companyName: '',
     email: '',
@@ -57,7 +61,6 @@ export default function App() {
     password: ''
   });
 
-  // Input Sanitization Helper: Strips out risky HTML/Script characters
   const sanitizeInput = (value: string) => {
     return value.replace(/[<>]/g, '');
   };
@@ -65,6 +68,12 @@ export default function App() {
   const handleInputChange = (field: string, value: string) => {
     const sanitized = sanitizeInput(value);
     setFormData(prev => ({ ...prev, [field]: sanitized }));
+  };
+
+  const selectPlanAndStart = (id: number, name: string) => {
+    setFormData(prev => ({ ...prev, planId: id, planName: name }));
+    setCurrentView('signup');
+    setSignupStep(1);
   };
 
   // Live Password Validation Criteria
@@ -78,11 +87,12 @@ export default function App() {
   // Handle Tenant Registration Form Submission
   const handleNextStep = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (signupStep < 3) {
+    if (signupStep < 4) {
       setSignupStep(signupStep + 1);
     } else {
       if (!isPasswordValid) return;
       
+      setIsLoading(true);
       try {
         const response = await fetch('/api/register', {
           method: 'POST',
@@ -90,6 +100,7 @@ export default function App() {
           body: JSON.stringify(formData)
         });
         const data = await response.json();
+        setIsLoading(false);
 
         if (data.success) {
           Swal.fire({
@@ -112,6 +123,7 @@ export default function App() {
           });
         }
       } catch (err) {
+        setIsLoading(false);
         console.error('Network error during registration:', err);
         Swal.fire({
           title: 'Connection Error',
@@ -128,6 +140,7 @@ export default function App() {
   // Handle User Sign-In Submission
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await fetch('/api/auth', {
         method: 'POST',
@@ -135,6 +148,7 @@ export default function App() {
         body: JSON.stringify({ action: 'login', ...signInData })
       });
       const data = await response.json();
+      setIsLoading(false);
 
       if (data.success) {
         Swal.fire({
@@ -156,6 +170,7 @@ export default function App() {
         });
       }
     } catch (err) {
+      setIsLoading(false);
       console.error('Sign-in error:', err);
       Swal.fire({
         title: 'Connection Error',
@@ -168,7 +183,6 @@ export default function App() {
     }
   };
 
-  // Navigation handler
   const navigateTo = (view: 'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer') => {
     setCurrentView(view);
     setMobileMenuOpen(false);
@@ -176,22 +190,58 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
+  const plans = [
+    {
+      id: 1,
+      name: "Starter Plan",
+      price: "₦15,000",
+      period: "per month",
+      desc: "Ideal for growing single-counter retail shops and boutiques.",
+      users: "Up to 3 Staff Users",
+      customers: "500 Saved Customers",
+      transactions: "1,000 Monthly Transactions",
+      highlight: false
+    },
+    {
+      id: 2,
+      name: "Professional Plan",
+      price: "₦45,000",
+      period: "per month",
+      desc: "Perfect for supermarkets and multi-branch retail stores.",
+      users: "Up to 10 Staff Users",
+      customers: "5,000 Saved Customers",
+      transactions: "10,000 Monthly Transactions",
+      highlight: true
+    },
+    {
+      id: 3,
+      name: "Enterprise Plan",
+      price: "₦120,000",
+      period: "per month",
+      desc: "Built for large wholesale distributors and corporate chains.",
+      users: "Up to 50 Staff Users",
+      customers: "50,000 Saved Customers",
+      transactions: "100,000 Monthly Transactions",
+      highlight: false
+    }
+  ];
+
   const modules = [
-    { icon: <ShoppingCart className="w-8 h-8 text-emerald-400" />, title: "1. POS Terminal & Checkout", desc: "Lightning-fast touch-optimized checkout, barcode scanning, offline mode caching, split payments, and shift drawer management." },
+    { icon: <ShoppingCart className="w-8 h-8 text-emerald-400" />, title: "1. POS Terminal & Checkout", desc: "Lightning-fast touch-optimized checkout, barcode scanning, offline mode caching, split payments in ₦ Naira, and shift drawer management." },
     { icon: <Package className="w-8 h-8 text-emerald-400" />, title: "2. Inventory & Stock Management", desc: "Real-time stock tracking across multi-locations, low stock automated alerts, barcode generation, and variant matrix tracking." },
-    { icon: <Users className="w-8 h-8 text-emerald-400" />, title: "3. CRM & Customer Loyalty", desc: "Detailed client profiles, lifetime value tracking, tiered rewards points, gift cards, and targeted marketing integration." },
+    { icon: <Users className="w-8 h-8 text-emerald-400" />, title: "3. CRM & Customer Loyalty", desc: "Detailed client profiles, lifetime value tracking in ₦, tiered rewards points, gift cards, and targeted marketing integration." },
     { icon: <ShieldCheck className="w-8 h-8 text-emerald-400" />, title: "4. Staff Management & RBAC", desc: "Granular role-based access control, integrated shift time-clock tracking, employee sales performance, and automated commission logs." },
-    { icon: <Store className="w-8 h-8 text-emerald-400" />, title: "5. Multi-Store Enterprise Control", desc: "Centralized master dashboard managing multiple branches, inter-store inventory transfers, and localized tax/pricing structures." },
-    { icon: <BarChart3 className="w-8 h-8 text-emerald-400" />, title: "6. Reports & Business Analytics", desc: "Real-time sales summaries, profit margin trends, Z-reports, and seamless CSV/Excel exports for accounting integration." },
-    { icon: <Layers className="w-8 h-8 text-emerald-400" />, title: "7. Integrations & Extensibility", desc: "Two-way e-commerce sync (Shopify, WooCommerce, custom web apps), payment gateway APIs, and open REST webhooks." },
-    { icon: <FileText className="w-8 h-8 text-emerald-400" />, title: "8. Quotation & B2B Invoicing", desc: "Dynamic quotes sent via email, interactive client approval loops, one-click conversion to proforma invoices, and payment logging." }
+    { icon: <Store className="w-8 h-8 text-emerald-400" />, title: "5. Multi-Store Enterprise Control", desc: "Centralized master dashboard managing multiple branches, inter-store inventory transfers, and localized ₦ pricing structures." },
+    { icon: <BarChart3 className="w-8 h-8 text-emerald-400" />, title: "6. Reports & Business Analytics", desc: "Real-time sales summaries in ₦, profit margin trends, Z-reports, and seamless CSV/Excel exports for accounting integration." },
+    { icon: <Layers className="w-8 h-8 text-emerald-400" />, title: "7. Integrations & Extensibility", desc: "Two-way e-commerce sync, Paystack/Flutterwave gateway APIs for ₦ transactions, and open REST webhooks." },
+    { icon: <FileText className="w-8 h-8 text-emerald-400" />, title: "8. Quotation & B2B Invoicing", desc: "Dynamic ₦ quotes sent via email, interactive client approval loops, one-click conversion to proforma invoices, and payment logging." }
   ];
 
   const workflowSteps = [
-    { step: "01", title: "Quotation Generation", desc: "Build itemized B2B quotations with custom tax, discounts, and expiration dates." },
+    { step: "01", title: "Quotation Generation", desc: "Build itemized B2B quotations with custom tax, discounts, and ₦ pricing." },
     { step: "02", title: "Client Review & Feedback", desc: "Email secure PDF links allowing clients to review, request edits, or digitally approve." },
     { step: "03", title: "Proforma Conversion", desc: "Instantly convert approved quotations into proforma invoices without re-entering items." },
-    { step: "04", title: "Payment & Ledger Logging", desc: "Process payments via gateways or cash, automatically updating inventory and general ledgers." }
+    { step: "04", title: "Payment & Ledger Logging", desc: "Process payments via Paystack, transfer or cash in ₦, automatically updating ledgers." }
   ];
 
   // ================= VIEW: SIGN IN =================
@@ -254,8 +304,13 @@ export default function App() {
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all mt-4">
-                Sign In to Dashboard
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all mt-4 flex items-center justify-center space-x-2"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>{isLoading ? 'Signing In...' : 'Sign In to Dashboard'}</span>
               </button>
             </form>
 
@@ -272,7 +327,7 @@ export default function App() {
     );
   }
 
-  // ================= VIEW: CONVERSATIONAL SIGN UP (GET STARTED) =================
+  // ================= VIEW: CONVERSATIONAL SIGN UP (4 STEPS) =================
   if (currentView === 'signup') {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6 relative">
@@ -287,27 +342,49 @@ export default function App() {
             <div className="flex items-center justify-between mb-6">
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Step {signupStep} of 3</span>
+                <span>Step {signupStep} of 4</span>
               </div>
               <span className="text-xs text-slate-500 font-medium">
-                {signupStep === 1 ? 'Personal Info' : signupStep === 2 ? 'Business Details' : 'Secure Account'}
+                {signupStep === 1 ? 'Selected Plan' : signupStep === 2 ? 'Personal Info' : signupStep === 3 ? 'Business Details' : 'Secure Account'}
               </span>
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-2">
-              {signupStep === 1 && "Let's get to know you"}
-              {signupStep === 2 && "Tell us about your business"}
-              {signupStep === 3 && "Secure your SaaS instance"}
+              {signupStep === 1 && "Confirm your subscription"}
+              {signupStep === 2 && "Let's get to know you"}
+              {signupStep === 3 && "Tell us about your business"}
+              {signupStep === 4 && "Secure your SaaS instance"}
             </h2>
             <p className="text-sm text-slate-400 mb-8">
-              {signupStep === 1 && "Please enter your name and professional contact email."}
-              {signupStep === 2 && "We need your store name, phone number, and branch address."}
-              {signupStep === 3 && "Create a secure password with live strength verification."}
+              {signupStep === 1 && `You selected the ${formData.planName} Plan. All 8 modules are included!`}
+              {signupStep === 2 && "Please enter your name and professional contact email."}
+              {signupStep === 3 && "We need your store name, phone number, and branch address."}
+              {signupStep === 4 && "Create a secure password with live strength verification."}
             </p>
 
             <form onSubmit={handleNextStep} className="space-y-4">
-              {/* STEP 1 */}
               {signupStep === 1 && (
+                <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">{formData.planName} Plan</span>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">Active Selection</span>
+                  </div>
+                  <p className="text-xs text-slate-400">Includes all 8 enterprise POS modules, offline SQLite/IndexedDB caching, and B2B invoicing.</p>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const element = document.getElementById('pricing');
+                      if (element) element.scrollIntoView({ behavior: 'smooth' });
+                      navigateTo('landing');
+                    }} 
+                    className="text-xs text-emerald-400 hover:underline font-semibold block pt-1"
+                  >
+                    Change Plan Tier
+                  </button>
+                </div>
+              )}
+
+              {signupStep === 2 && (
                 <>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Full Name</label>
@@ -341,8 +418,7 @@ export default function App() {
                 </>
               )}
 
-              {/* STEP 2 */}
-              {signupStep === 2 && (
+              {signupStep === 3 && (
                 <>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Company / Store Name</label>
@@ -391,8 +467,7 @@ export default function App() {
                 </>
               )}
 
-              {/* STEP 3 */}
-              {signupStep === 3 && (
+              {signupStep === 4 && (
                 <>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
@@ -415,7 +490,6 @@ export default function App() {
                       </button>
                     </div>
 
-                    {/* Live Password Strength Requirements Checklist */}
                     <div className="mt-4 p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
                       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password Security Requirements:</p>
                       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -439,7 +513,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Terms & Conditions Agreement Checkbox */}
                   <div className="pt-2">
                     <label className="flex items-start space-x-3 cursor-pointer">
                       <input 
@@ -465,6 +538,7 @@ export default function App() {
                   <button 
                     type="button" 
                     onClick={() => setSignupStep(signupStep - 1)}
+                    disabled={isLoading}
                     className="w-1/3 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition-all"
                   >
                     Back
@@ -472,11 +546,12 @@ export default function App() {
                 )}
                 <button 
                   type="submit" 
-                  disabled={(signupStep === 3 && (!agreedToTerms || !isPasswordValid))}
-                  className={`${signupStep > 1 ? 'w-2/3' : 'w-full'} py-3.5 rounded-xl ${(signupStep === 3 && (!agreedToTerms || !isPasswordValid)) ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'} font-semibold text-sm transition-all flex items-center justify-center space-x-2`}
+                  disabled={isLoading || (signupStep === 4 && (!agreedToTerms || !isPasswordValid))}
+                  className={`${signupStep > 1 ? 'w-2/3' : 'w-full'} py-3.5 rounded-xl ${(signupStep === 4 && (!agreedToTerms || !isPasswordValid)) ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'} font-semibold text-sm transition-all flex items-center justify-center space-x-2`}
                 >
-                  <span>{signupStep === 3 ? 'Launch Tenant Instance' : 'Continue'}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{isLoading ? 'Initializing...' : (signupStep === 4 ? 'Launch Tenant Instance' : 'Continue')}</span>
+                  {!isLoading && signupStep < 4 && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
             </form>
@@ -491,7 +566,6 @@ export default function App() {
         </div>
         <footer className="text-center text-xs text-slate-600 py-4">&copy; 2026 NderTech Universal Services.</footer>
 
-        {/* Non-Destructive Legal Modal Drawer */}
         {activeLegalModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-8 relative shadow-2xl max-h-[80vh] overflow-y-auto">
@@ -638,8 +712,6 @@ export default function App() {
   // ================= VIEW: LANDING PAGE =================
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
-      
-      {/* Navigation Header */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigateTo('landing')}>
@@ -650,18 +722,17 @@ export default function App() {
               <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
                 NderTech POS
               </span>
-              <span className="block text-xs font-medium text-emerald-400 tracking-wider uppercase">Enterprise SaaS</span>
+              <span className="block text-xs font-medium text-emerald-400 tracking-wider uppercase">Enterprise SaaS (₦)</span>
             </div>
           </div>
 
-          {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
             <a href="#features" className="hover:text-emerald-400 transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-emerald-400 transition-colors">Plans</a>
             <a href="#workflow" className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
             <a href="#architecture" className="hover:text-emerald-400 transition-colors">Tech Stack</a>
           </nav>
 
-          {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <button 
               onClick={() => navigateTo('signin')}
@@ -670,14 +741,13 @@ export default function App() {
               Sign In
             </button>
             <button 
-              onClick={() => navigateTo('signup')}
+              onClick={() => selectPlanAndStart(1, 'Starter Plan')}
               className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5"
             >
               Get Started
             </button>
           </div>
 
-          {/* Mobile Hamburger Button */}
           <div className="md:hidden flex items-center">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -688,11 +758,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900 border-b border-slate-800 px-6 py-6 space-y-4 shadow-2xl animate-in slide-in-from-top duration-200">
             <nav className="flex flex-col space-y-4 text-base font-medium text-slate-300">
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Features</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Plans</a>
               <a href="#workflow" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
               <a href="#architecture" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Tech Stack</a>
             </nav>
@@ -704,7 +774,7 @@ export default function App() {
                 Sign In
               </button>
               <button 
-                onClick={() => navigateTo('signup')}
+                onClick={() => selectPlanAndStart(1, 'Starter Plan')}
                 className="w-full py-3 text-center rounded-xl bg-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-colors"
               >
                 Get Started
@@ -714,37 +784,103 @@ export default function App() {
         )}
       </header>
 
-      {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950/40 to-slate-950 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-8 animate-pulse">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Next-Generation Multi-Tenant POS & Invoicing Platform</span>
+            <span>Next-Generation Multi-Tenant POS & Invoicing Platform in ₦ Naira</span>
           </div>
           
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-            The Ultimate <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Point of Sale</span> & B2B Suite for Growing Businesses
+            The Ultimate <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Point of Sale</span> & B2B Suite for Nigerian Businesses
           </h1>
           
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-normal">
-            Empower your retail stores, supermarkets, and wholesale businesses with real-time inventory, offline cashier terminals, and seamless quotation-to-invoice workflows.
+            Empower your retail stores, supermarkets, and wholesale businesses with real-time inventory, offline cashier terminals in ₦, and seamless quotation-to-invoice workflows.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <button 
-              onClick={() => navigateTo('signup')}
+              onClick={() => selectPlanAndStart(1, 'Starter Plan')}
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center space-x-2 transform hover:-translate-y-0.5"
             >
               <span>Launch Your SaaS Store</span>
               <ArrowRight className="w-5 h-5" />
             </button>
             <a 
-              href="#features"
+              href="#pricing"
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-base transition-all text-center"
             >
-              Explore Live Modules
+              View Pricing Plans
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Subscription Plans Section */}
+      <section id="pricing" className="py-24 bg-slate-950 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Flexible Scaling Tiers</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              Choose the Plan That Fits Your Scale
+            </h2>
+            <p className="mt-4 text-slate-400 text-base">
+              Every plan includes <strong>all 8 enterprise modules</strong>. Choose your tier based on staff users, customer directory capacity, and monthly transaction volume.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {plans.map((plan) => (
+              <div 
+                key={plan.id}
+                className={`relative p-8 rounded-3xl bg-slate-900 border ${plan.highlight ? 'border-emerald-500 shadow-2xl shadow-emerald-950/60 scale-105' : 'border-slate-800'} flex flex-col justify-between transition-all`}
+              >
+                {plan.highlight && (
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
+                    Most Popular
+                  </span>
+                )}
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                  <p className="text-sm text-slate-400 mb-6">{plan.desc}</p>
+                  <div className="flex items-baseline space-x-2 mb-6">
+                    <span className="text-4xl font-extrabold text-white">{plan.price}</span>
+                    <span className="text-xs text-slate-500">{plan.period}</span>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-slate-800 mb-8 text-sm text-slate-300">
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{plan.users}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{plan.customers}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{plan.transactions}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>All 8 Core POS & B2B Modules</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => selectPlanAndStart(plan.id, plan.name)}
+                  className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${plan.highlight ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}
+                >
+                  Get Started with {plan.name}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -757,7 +893,7 @@ export default function App() {
               Packed with Advanced Enterprise Features
             </h2>
             <p className="mt-4 text-slate-400 text-base sm:text-lg">
-              Every tool your subscribers need to run retail counters, manage multi-branch stock, and close B2B enterprise deals effortlessly.
+              Every tool your subscribers need to run retail counters, manage multi-branch stock, and close B2B enterprise deals denominated in Naira.
             </p>
           </div>
 
@@ -782,7 +918,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* B2B Quotation Workflow Section (Module 8 Highlight) */}
       <section id="workflow" className="py-24 bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -794,7 +929,7 @@ export default function App() {
               From Quotation to Cash in 4 Steps
             </h2>
             <p className="mt-4 text-slate-400 text-base">
-              Seamlessly bridge the gap between retail checkouts and corporate wholesale contracts.
+              Seamlessly bridge the gap between retail checkouts and corporate wholesale contracts with ₦ invoicing.
             </p>
           </div>
 
@@ -810,7 +945,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Tech Stack & Architecture Section */}
       <section id="architecture" className="py-20 bg-slate-900/30 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-8">Built on Enterprise-Grade Technology</h2>
@@ -835,10 +969,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* Footer with Legal Links */}
       <footer className="mt-auto py-12 bg-slate-950 border-t border-slate-900 text-center text-sm text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-          <p>&copy; 2026 NderTech Universal Services. Built for High-Performance SaaS Commerce.</p>
+          <p>&copy; 2026 NderTech Universal Services. Built for High-Performance SaaS Commerce (₦).</p>
           <div className="flex space-x-6 text-xs">
             <button onClick={() => navigateTo('terms')} className="hover:text-emerald-400 transition-colors">Terms & Conditions</button>
             <button onClick={() => navigateTo('privacy')} className="hover:text-emerald-400 transition-colors">Privacy Policy</button>
