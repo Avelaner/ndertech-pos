@@ -33,7 +33,9 @@ import {
   Printer,
   Download,
   Send,
-  ArrowRight
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function App() {
@@ -42,11 +44,12 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Authenticated User State
+  // Authenticated User State & Navigation
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Pagination Helper State
+  // Search & Pagination States per module
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -73,7 +76,7 @@ export default function App() {
   ]);
   const [productModal, setProductModal] = useState({ isOpen: false, editId: null, name: '', category: '', price: '', stock: '' });
 
-  // 5. PURCHASE STATE (CRUD)
+  // 5. PURCHASES STATE (CRUD)
   const [purchases, setPurchases] = useState([
     { id: 1, poNo: 'PO-1001', supplier: 'Northwind Agro Ltd', total: 750000, date: '2026-10-01', status: 'Received' }
   ]);
@@ -95,7 +98,7 @@ export default function App() {
   const [quotationModal, setQuotationModal] = useState({ isOpen: false, client: '', items: '', amount: '' });
 
   // 8. SUBSCRIPTION PLAN STATE
-  const [currentPlan, setCurrentPlan] = useState({ name: 'Professional Plan', price: '₦45,000 / month', status: 'Active', expiry: '2026-11-06' });
+  const [currentPlan] = useState({ name: 'Professional Plan', price: '₦45,000 / month', status: 'Active', expiry: '2026-11-06' });
 
   // 9. INVOICES STATE (View, Email, Edit)
   const [invoices, setInvoices] = useState([
@@ -114,13 +117,8 @@ export default function App() {
   const [newBranchData, setNewBranchData] = useState({ branchName: '', address: '', phone: '' });
   const [newStaffData, setNewStaffData] = useState({ branchId: '', name: '', email: '', password: '', roleId: 'cashier' });
 
-  // Sign In / Sign Up form states
+  // Sign In state
   const [signInData, setSignInData] = useState({ email: '', password: '' });
-  const [signupStep, setSignupStep] = useState(1);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [formData, setFormData] = useState({ planId: 2, planName: 'Professional Plan', fullName: '', companyName: '', email: '', phone: '', address: '', password: '' });
-
-  const sanitizeInput = (value) => value.replace(/[<>]/g, '');
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -161,9 +159,15 @@ export default function App() {
     }
   };
 
-  const paginate = (items, page) => {
-    const start = (page - 1) * itemsPerPage;
-    return items.slice(start, start + itemsPerPage);
+  const paginateData = (items) => {
+    const filtered = items.filter(item => 
+      Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    const start = (currentPage - 1) * itemsPerPage;
+    return {
+      paginated: filtered.slice(start, start + itemsPerPage),
+      totalPages: Math.ceil(filtered.length / itemsPerPage) || 1
+    };
   };
 
   const navigateTo = (view) => {
@@ -203,18 +207,18 @@ export default function App() {
               {[
                 { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
                 { id: 'pos', label: 'POS Terminal (Sales)', icon: <ShoppingCart className="w-4 h-4" /> },
-                { id: 'products', label: 'Products (CRUD)', icon: <Package className="w-4 h-4" /> },
-                { id: 'customers', label: 'Customers & History', icon: <Users className="w-4 h-4" /> },
-                { id: 'suppliers', label: 'Suppliers (CRUD)', icon: <Truck className="w-4 h-4" /> },
-                { id: 'purchases', label: 'Purchases (CRUD)', icon: <ShoppingBag className="w-4 h-4" /> },
-                { id: 'quotations', label: 'Quotations & Proforma', icon: <FileText className="w-4 h-4" /> },
+                { id: 'products', label: 'Products Page', icon: <Package className="w-4 h-4" /> },
+                { id: 'customers', label: 'Customers Page', icon: <Users className="w-4 h-4" /> },
+                { id: 'suppliers', label: 'Suppliers Page', icon: <Truck className="w-4 h-4" /> },
+                { id: 'purchases', label: 'Purchase Page', icon: <ShoppingBag className="w-4 h-4" /> },
+                { id: 'quotations', label: 'Quotation Page', icon: <FileText className="w-4 h-4" /> },
                 { id: 'invoices', label: 'Invoices & Billing', icon: <FileText className="w-4 h-4" /> },
                 { id: 'transactions', label: 'All Transactions', icon: <BarChart3 className="w-4 h-4" /> },
                 { id: 'reports', label: 'Reports (D/W/M)', icon: <BarChart3 className="w-4 h-4" /> },
                 { id: 'subscription', label: 'Subscription Plan', icon: <CreditCard className="w-4 h-4" /> },
                 { id: 'branches', label: 'Branches & Staff', icon: <Building className="w-4 h-4" /> }
               ].map(tab => (
-                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setCurrentPage(1); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setCurrentPage(1); setSearchTerm(''); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
                   {tab.icon}
                   <span>{tab.label}</span>
                 </button>
@@ -229,7 +233,7 @@ export default function App() {
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 sm:p-8">
           <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-slate-800 space-y-4 sm:space-y-0">
             <div>
@@ -241,31 +245,39 @@ export default function App() {
             </span>
           </header>
 
-          {/* 1. OVERVIEW */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Total Products</p>
-                  <p className="text-3xl font-black text-white">{products.length}</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Registered Customers</p>
-                  <p className="text-3xl font-black text-white">{customers.length}</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Active Quotations</p>
-                  <p className="text-3xl font-black text-white">{quotations.length}</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Subscription Tier</p>
-                  <p className="text-2xl font-black text-emerald-400">Pro</p>
-                </div>
+          {/* SHARED PAGINATION CONTROLS HELPER */}
+          {['products', 'customers', 'suppliers', 'purchases', 'quotations', 'invoices', 'transactions'].includes(activeTab) && (
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <input type="text" placeholder={`Search ${activeTab}...`} value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-white text-xs focus:outline-none focus:border-emerald-500" />
               </div>
             </div>
           )}
 
-          {/* 2. POS TERMINAL & SALES */}
+          {/* 1. OVERVIEW PAGE */}
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+                <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Total Products</p>
+                <p className="text-3xl font-black text-white">{products.length}</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+                <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Registered Customers</p>
+                <p className="text-3xl font-black text-white">{customers.length}</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+                <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Active Quotations</p>
+                <p className="text-3xl font-black text-white">{quotations.length}</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+                <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Subscription Tier</p>
+                <p className="text-2xl font-black text-emerald-400">Pro</p>
+              </div>
+            </div>
+          )}
+
+          {/* 2. POS TERMINAL PAGE */}
           {activeTab === 'pos' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
@@ -346,42 +358,48 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. PRODUCTS (CRUD) */}
+          {/* 3. PRODUCTS PAGE (CRUD) */}
           {activeTab === 'products' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Product Catalog (CRUD)</h3>
+                <h3 className="text-lg font-bold text-white">Product Catalog Management</h3>
                 <button onClick={() => setProductModal({ isOpen: true, editId: null, name: '', category: '', price: '', stock: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Product</span></button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Name</th><th className="p-4">Category</th><th className="p-4">Price (₦)</th><th className="p-4">Stock</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {paginate(products, currentPage).map(p => (
-                      <tr key={p.id}>
-                        <td className="p-4 font-bold text-white">{p.name}</td>
-                        <td className="p-4">{p.category}</td>
-                        <td className="p-4 text-emerald-400">₦{p.price.toLocaleString()}</td>
-                        <td className="p-4">{p.stock}</td>
-                        <td className="p-4 text-right space-x-2">
-                          <button onClick={() => setProductModal({ isOpen: true, editId: p.id, name: p.name, category: p.category, price: p.price, stock: p.stock })} className="p-2 bg-slate-800 rounded text-emerald-400"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => setProducts(products.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="flex justify-between items-center pt-4 text-xs text-slate-400">
-                  <span>Showing page {currentPage}</span>
-                  <div className="space-x-2">
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50">Prev</button>
-                    <button disabled={currentPage * itemsPerPage >= products.length} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50">Next</button>
+              {(() => {
+                const { paginated, totalPages } = paginateData(products);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Name</th><th className="p-4">Category</th><th className="p-4">Price (₦)</th><th className="p-4">Stock</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(p => (
+                          <tr key={p.id}>
+                            <td className="p-4 font-bold text-white">{p.name}</td>
+                            <td className="p-4">{p.category}</td>
+                            <td className="p-4 text-emerald-400">₦{p.price.toLocaleString()}</td>
+                            <td className="p-4">{p.stock}</td>
+                            <td className="p-4 text-right space-x-2">
+                              <button onClick={() => setProductModal({ isOpen: true, editId: p.id, name: p.name, category: p.category, price: p.price, stock: p.stock })} className="p-2 bg-slate-800 rounded text-emerald-400"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => setProducts(products.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {productModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
@@ -411,35 +429,48 @@ export default function App() {
             </div>
           )}
 
-          {/* 4. CUSTOMERS & PRINTABLE HISTORY */}
+          {/* 4. CUSTOMERS PAGE & PRINTABLE HISTORY */}
           {activeTab === 'customers' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Customer Directory & Ledger</h3>
+                <h3 className="text-lg font-bold text-white">Customer Directory & History Ledger</h3>
                 <button onClick={() => setCustomerModal({ isOpen: true, editId: null, name: '', phone: '', email: '', address: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Customer</span></button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Name</th><th className="p-4">Phone</th><th className="p-4">Spent (₦)</th><th className="p-4">Balance Due</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {paginate(customers, currentPage).map(c => (
-                      <tr key={c.id}>
-                        <td className="p-4 font-bold text-white">{c.name}</td>
-                        <td className="p-4">{c.phone}</td>
-                        <td className="p-4 text-emerald-400">₦{c.spent.toLocaleString()}</td>
-                        <td className="p-4 text-amber-400">₦{c.balance.toLocaleString()}</td>
-                        <td className="p-4 text-right space-x-2">
-                          <button onClick={() => setSelectedCustomerHistory(c)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold">View Ledger</button>
-                          <button onClick={() => setCustomers(customers.filter(x => x.id !== c.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(() => {
+                const { paginated, totalPages } = paginateData(customers);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Name</th><th className="p-4">Phone</th><th className="p-4">Spent (₦)</th><th className="p-4">Balance Due</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(c => (
+                          <tr key={c.id}>
+                            <td className="p-4 font-bold text-white">{c.name}</td>
+                            <td className="p-4">{c.phone}</td>
+                            <td className="p-4 text-emerald-400">₦{c.spent.toLocaleString()}</td>
+                            <td className="p-4 text-amber-400">₦{c.balance.toLocaleString()}</td>
+                            <td className="p-4 text-right space-x-2">
+                              <button onClick={() => setSelectedCustomerHistory(c)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold">View Ledger</button>
+                              <button onClick={() => setCustomers(customers.filter(x => x.id !== c.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {selectedCustomerHistory && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4 overflow-y-auto">
@@ -502,31 +533,44 @@ export default function App() {
             </div>
           )}
 
-          {/* 5. SUPPLIERS (CRUD) */}
+          {/* 5. SUPPLIERS PAGE (CRUD) */}
           {activeTab === 'suppliers' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Suppliers Management (CRUD)</h3>
+                <h3 className="text-lg font-bold text-white">Suppliers Directory Page</h3>
                 <button onClick={() => setSupplierModal({ isOpen: true, editId: null, name: '', contact: '', item: '', email: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Supplier</span></button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Supplier Name</th><th className="p-4">Contact</th><th className="p-4">Supplied Items</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {paginate(suppliers, currentPage).map(s => (
-                      <tr key={s.id}>
-                        <td className="p-4 font-bold text-white">{s.name}</td>
-                        <td className="p-4">{s.contact}</td>
-                        <td className="p-4">{s.item}</td>
-                        <td className="p-4 text-right"><button onClick={() => setSuppliers(suppliers.filter(x => x.id !== s.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(() => {
+                const { paginated, totalPages } = paginateData(suppliers);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Supplier Name</th><th className="p-4">Contact</th><th className="p-4">Supplied Items</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(s => (
+                          <tr key={s.id}>
+                            <td className="p-4 font-bold text-white">{s.name}</td>
+                            <td className="p-4">{s.contact}</td>
+                            <td className="p-4">{s.item}</td>
+                            <td className="p-4 text-right"><button onClick={() => setSuppliers(suppliers.filter(x => x.id !== s.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {supplierModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
@@ -551,32 +595,45 @@ export default function App() {
             </div>
           )}
 
-          {/* 6. PURCHASES (CRUD) */}
+          {/* 6. PURCHASE PAGE (CRUD) */}
           {activeTab === 'purchases' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Purchase Orders (CRUD)</h3>
+                <h3 className="text-lg font-bold text-white">Purchase Orders Page</h3>
                 <button onClick={() => setPurchaseModal({ isOpen: true, supplier: '', item: '', qty: '', cost: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>New Purchase</span></button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">PO Number</th><th className="p-4">Supplier</th><th className="p-4">Total Cost</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {purchases.map(p => (
-                      <tr key={p.id}>
-                        <td className="p-4 font-bold text-white">{p.poNo}</td>
-                        <td className="p-4">{p.supplier}</td>
-                        <td className="p-4 text-emerald-400">₦{p.total.toLocaleString()}</td>
-                        <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{p.status}</span></td>
-                        <td className="p-4 text-right"><button onClick={() => setPurchases(purchases.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(() => {
+                const { paginated, totalPages } = paginateData(purchases);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">PO Number</th><th className="p-4">Supplier</th><th className="p-4">Total Cost</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(p => (
+                          <tr key={p.id}>
+                            <td className="p-4 font-bold text-white">{p.poNo}</td>
+                            <td className="p-4">{p.supplier}</td>
+                            <td className="p-4 text-emerald-400">₦{p.total.toLocaleString()}</td>
+                            <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{p.status}</span></td>
+                            <td className="p-4 text-right"><button onClick={() => setPurchases(purchases.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {purchaseModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
@@ -602,38 +659,51 @@ export default function App() {
             </div>
           )}
 
-          {/* 7. QUOTATIONS & PROFORMA CONVERSION */}
+          {/* 7. QUOTATION PAGE (Convert to Proforma / Sale) */}
           {activeTab === 'quotations' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Quotations & Proforma Invoices</h3>
+                <h3 className="text-lg font-bold text-white">Quotation & Proforma Page</h3>
                 <button onClick={() => setQuotationModal({ isOpen: true, client: '', items: '', amount: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Create Quotation</span></button>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Quote No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {quotations.map(q => (
-                      <tr key={q.id}>
-                        <td className="p-4 font-bold text-white">{q.quoteNo}</td>
-                        <td className="p-4">{q.client}</td>
-                        <td className="p-4 text-emerald-400">₦{q.amount.toLocaleString()}</td>
-                        <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{q.status}</span></td>
-                        <td className="p-4 text-right">
-                          <button onClick={() => {
-                            setSalesRecords([{ id: Date.now(), ref: `POS-${Math.floor(1000+Math.random()*9000)}`, customer: q.client, items: q.items, subtotal: q.amount, discount: 0, totalDue: q.amount, paid: q.amount, balance: 0, date: new Date().toISOString().split('T')[0] }, ...salesRecords]);
-                            setQuotations(quotations.filter(x => x.id !== q.id));
-                            Swal.fire('Converted!', 'Quotation converted to Sale successfully.', 'success');
-                          }} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Convert to Sale</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(() => {
+                const { paginated, totalPages } = paginateData(quotations);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Quote No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(q => (
+                          <tr key={q.id}>
+                            <td className="p-4 font-bold text-white">{q.quoteNo}</td>
+                            <td className="p-4">{q.client}</td>
+                            <td className="p-4 text-emerald-400">₦{q.amount.toLocaleString()}</td>
+                            <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{q.status}</span></td>
+                            <td className="p-4 text-right space-x-2">
+                              <button onClick={() => {
+                                setSalesRecords([{ id: Date.now(), ref: `POS-${Math.floor(1000+Math.random()*9000)}`, customer: q.client, items: q.items, subtotal: q.amount, discount: 0, totalDue: q.amount, paid: q.amount, balance: 0, date: new Date().toISOString().split('T')[0] }, ...salesRecords]);
+                                setQuotations(quotations.filter(x => x.id !== q.id));
+                                Swal.fire('Converted!', 'Quotation converted to Sale successfully.', 'success');
+                              }} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Convert to Sale</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {quotationModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
@@ -658,70 +728,96 @@ export default function App() {
             </div>
           )}
 
-          {/* 9. INVOICES & BILLING */}
+          {/* 9. INVOICES & BILLING PAGE */}
           {activeTab === 'invoices' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-white">Invoices & Billing</h3>
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Invoice No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {invoices.map(inv => (
-                      <tr key={inv.id}>
-                        <td className="p-4 font-bold text-white">{inv.invNo}</td>
-                        <td className="p-4">{inv.client}</td>
-                        <td className="p-4 text-emerald-400">₦{inv.amount.toLocaleString()}</td>
-                        <td className="p-4"><span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded">{inv.status}</span></td>
-                        <td className="p-4 text-right space-x-2">
-                          <button onClick={() => Swal.fire('Sent!', `Invoice sent to ${inv.email || 'client'} successfully.`, 'success')} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded text-xs font-semibold flex items-center space-x-1 inline-flex"><Send className="w-3 h-3" /><span>Email</span></button>
-                          <button onClick={() => setInvoices(invoices.map(x => x.id === inv.id ? {...x, status: 'Paid'} : x))} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Mark Paid</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <h3 className="text-lg font-bold text-white">Invoices & Billing Page</h3>
+              {(() => {
+                const { paginated, totalPages } = paginateData(invoices);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Invoice No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(inv => (
+                          <tr key={inv.id}>
+                            <td className="p-4 font-bold text-white">{inv.invNo}</td>
+                            <td className="p-4">{inv.client}</td>
+                            <td className="p-4 text-emerald-400">₦{inv.amount.toLocaleString()}</td>
+                            <td className="p-4"><span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded">{inv.status}</span></td>
+                            <td className="p-4 text-right space-x-2">
+                              <button onClick={() => Swal.fire('Sent!', `Invoice sent to ${inv.email || 'client'} successfully.`, 'success')} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded text-xs font-semibold inline-flex items-center space-x-1"><Send className="w-3 h-3" /><span>Email</span></button>
+                              <button onClick={() => setInvoices(invoices.map(x => x.id === inv.id ? {...x, status: 'Paid'} : x))} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Mark Paid</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
-          {/* 10. ALL TRANSACTIONS */}
+          {/* 10. ALL TRANSACTIONS PAGE */}
           {activeTab === 'transactions' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">All Transactions Ledger</h3>
+                <h3 className="text-lg font-bold text-white">All Transactions Page</h3>
                 <div className="space-x-2">
                   <button onClick={() => Swal.fire('Exported', 'Transactions downloaded as CSV/Excel.', 'success')} className="px-3 py-2 bg-slate-800 text-emerald-400 text-xs rounded-xl font-semibold inline-flex items-center space-x-1"><Download className="w-3.5 h-3.5" /><span>Export Excel</span></button>
                   <button onClick={() => window.print()} className="px-3 py-2 bg-slate-800 text-emerald-400 text-xs rounded-xl font-semibold inline-flex items-center space-x-1"><Printer className="w-3.5 h-3.5" /><span>Export PDF</span></button>
                 </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                    <tr><th className="p-4">Reference</th><th className="p-4">Type</th><th className="p-4">Channel</th><th className="p-4">Amount</th><th className="p-4">Date</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {transactions.map(t => (
-                      <tr key={t.id}>
-                        <td className="p-4 font-bold text-white">{t.txnRef}</td>
-                        <td className="p-4">{t.type}</td>
-                        <td className="p-4">{t.channel}</td>
-                        <td className="p-4 text-emerald-400">{t.amount}</td>
-                        <td className="p-4">{t.date}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(() => {
+                const { paginated, totalPages } = paginateData(transactions);
+                return (
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-950 uppercase text-xs text-slate-400">
+                        <tr><th className="p-4">Reference</th><th className="p-4">Type</th><th className="p-4">Channel</th><th className="p-4">Amount</th><th className="p-4">Date</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {paginated.map(t => (
+                          <tr key={t.id}>
+                            <td className="p-4 font-bold text-white">{t.txnRef}</td>
+                            <td className="p-4">{t.type}</td>
+                            <td className="p-4">{t.channel}</td>
+                            <td className="p-4 text-emerald-400">{t.amount}</td>
+                            <td className="p-4">{t.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <div className="space-x-2">
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
+                        <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
-          {/* 11. REPORTS */}
+          {/* 11. REPORTS PAGE (Daily, Weekly, Monthly) */}
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-white">Business Financial Reports</h3>
+              <h3 className="text-lg font-bold text-white">Daily, Weekly & Monthly Reports</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
                   <span className="text-xs text-slate-400 uppercase font-semibold">Daily Report</span>
@@ -742,10 +838,10 @@ export default function App() {
             </div>
           )}
 
-          {/* 8. SUBSCRIPTION PLAN */}
+          {/* 8. SUBSCRIPTION PLAN PAGE */}
           {activeTab === 'subscription' && (
             <div className="space-y-6 max-w-xl">
-              <h3 className="text-lg font-bold text-white">SaaS Subscription Management</h3>
+              <h3 className="text-lg font-bold text-white">Subscription Management Page</h3>
               <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                 <div className="flex justify-between items-center border-b border-slate-800 pb-4">
                   <div>
