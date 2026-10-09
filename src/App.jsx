@@ -33,12 +33,12 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer'>('landing');
+  const [currentView, setCurrentView] = useState('landing');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Legal Modal States for Sign Up
-  const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const [activeLegalModal, setActiveLegalModal] = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Password visibility states
@@ -61,16 +61,16 @@ export default function App() {
     password: ''
   });
 
-  const sanitizeInput = (value: string) => {
+  const sanitizeInput = (value) => {
     return value.replace(/[<>]/g, '');
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     const sanitized = sanitizeInput(value);
     setFormData(prev => ({ ...prev, [field]: sanitized }));
   };
 
-  const selectPlanAndStart = (id: number, name: string) => {
+  const selectPlanAndStart = (id, name) => {
     setFormData(prev => ({ ...prev, planId: id, planName: name }));
     setCurrentView('signup');
     setSignupStep(1);
@@ -85,7 +85,7 @@ export default function App() {
   const isPasswordValid = hasLength && hasUppercase && hasNumber && hasSymbol;
 
   // Handle Tenant Registration Form Submission
-  const handleNextStep = async (e: React.FormEvent) => {
+  const handleNextStep = async (e) => {
     e.preventDefault();
     if (signupStep < 4) {
       setSignupStep(signupStep + 1);
@@ -138,7 +138,7 @@ export default function App() {
   };
 
   // Handle User Sign-In Submission
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -183,7 +183,7 @@ export default function App() {
     }
   };
 
-  const navigateTo = (view: 'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer') => {
+  const navigateTo = (view) => {
     setCurrentView(view);
     setMobileMenuOpen(false);
     if (view === 'signup') setSignupStep(1);
