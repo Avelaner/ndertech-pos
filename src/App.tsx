@@ -4,775 +4,984 @@ import {
   ShoppingCart, 
   Package, 
   Users, 
+  ShieldCheck, 
   Store, 
   BarChart3, 
+  Layers, 
   FileText, 
-  LayoutDashboard,
-  LogOut,
-  Truck,
-  CreditCard,
-  Edit,
-  Trash2,
-  Plus,
-  ShoppingBag,
-  Printer,
-  Download,
-  Send,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Minus,
-  Building
+  ArrowRight, 
+  Sparkles,
+  Zap,
+  Globe,
+  Database,
+  Server,
+  RefreshCw,
+  Lock,
+  Mail,
+  User,
+  Building,
+  Phone,
+  MapPin,
+  ArrowLeft,
+  Menu,
+  X,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  Loader2,
+  Check
 } from 'lucide-react';
 
 export default function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [currentView, setCurrentView] = useState<'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer'>('landing');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Search & Pagination States per module
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  // Legal Modal States for Sign Up
+  const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // 1. SUPPLIERS STATE (CRUD)
-  const [suppliers, setSuppliers] = useState([
-    { id: 1, name: 'Northwind Agro Ltd', contact: '+234 802 999 0000', item: 'Grains & Cereals', email: 'agro@northwind.ng' },
-    { id: 2, name: 'Lagos Mega Importers', contact: '+234 801 222 3333', item: 'Vegetable Oils', email: 'sales@megaimp.ng' }
-  ]);
-  const [supplierModal, setSupplierModal] = useState({ isOpen: false, editId: null, name: '', contact: '', item: '', email: '' });
+  // Password visibility states
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
-  // 2. CUSTOMERS STATE (CRUD & History Ledger)
-  const [customers, setCustomers] = useState([
-    { id: 1, name: 'Alhaji Dangote', phone: '+234 803 111 2222', email: 'dangote@b2b.ng', address: 'Kano Industrial Layout', spent: 450000, balance: 0 },
-    { id: 2, name: 'Chief Mrs. Okoro', phone: '+234 805 333 4444', email: 'okoro@retail.ng', address: 'Wuse Zone 4, Abuja', spent: 125000, balance: 15000 }
-  ]);
-  const [customerModal, setCustomerModal] = useState({ isOpen: false, editId: null, name: '', phone: '', email: '', address: '' });
-  const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
+  // Sign In Form States
+  const [signInData, setSignInData] = useState({ email: '', password: '' });
 
-  // 3. PRODUCTS STATE (CRUD)
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Premium Rice 50kg', category: 'Grains', price: 75000, stock: 45 },
-    { id: 2, name: 'Vegetable Oil 25L', category: 'Groceries', price: 38000, stock: 20 },
-    { id: 3, name: 'Semovita 10kg', category: 'Grains', price: 9500, stock: 60 }
-  ]);
-  const [productModal, setProductModal] = useState({ isOpen: false, editId: null, name: '', category: '', price: '', stock: '' });
+  // Conversational Sign-Up State (4 Steps: Plan -> Personal -> Business -> Security)
+  const [signupStep, setSignupStep] = useState(1);
+  const [formData, setFormData] = useState({
+    planId: 1,
+    planName: 'Starter Plan',
+    fullName: '',
+    companyName: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: ''
+  });
 
-  // 5. PURCHASES STATE (CRUD)
-  const [purchases, setPurchases] = useState([
-    { id: 1, poNo: 'PO-1001', supplier: 'Northwind Agro Ltd', total: 750000, date: '2026-10-01', status: 'Received' }
-  ]);
-  const [purchaseModal, setPurchaseModal] = useState({ isOpen: false, supplier: '', item: '', qty: '', cost: '' });
-
-  // 6. SALES STATE (POS Cart with Quantity Management, Discount %, Down Payment, Balance)
-  const [cart, setCart] = useState([]);
-  const [selectedCustomerForSale, setSelectedCustomerForSale] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [downPayment, setDownPayment] = useState(0);
-  const [salesRecords, setSalesRecords] = useState([
-    { id: 1, ref: 'POS-9001', customer: 'Alhaji Dangote', items: '1x Premium Rice 50kg', subtotal: 75000, discount: 0, totalDue: 75000, paid: 75000, balance: 0, date: '2026-10-06' }
-  ]);
-
-  // 7. QUOTATION STATE (CRUD & Convert to Proforma / Sales)
-  const [quotations, setQuotations] = useState([
-    { id: 1, quoteNo: 'QT-3001', client: 'Chief Mrs. Okoro', items: '2x Vegetable Oil 25L', amount: 76000, status: 'Approved' }
-  ]);
-  const [quotationModal, setQuotationModal] = useState({ isOpen: false, client: '', items: '', amount: '' });
-
-  // 8. SUBSCRIPTION PLAN STATE
-  const [currentPlan] = useState({ name: 'Professional Plan', price: '₦45,000 / month', status: 'Active', expiry: '2026-11-06' });
-
-  // 9. INVOICES STATE (View, Email, Edit)
-  const [invoices, setInvoices] = useState([
-    { id: 1, invNo: 'INV-5001', client: 'Chief Mrs. Okoro', amount: 125000, status: 'Unpaid', email: 'okoro@retail.ng' }
-  ]);
-
-  // 10. TRANSACTIONS STATE
-  const [transactions] = useState([
-    { id: 1, txnRef: 'TXN-8801', type: 'Sale Payment', channel: 'Paystack Transfer', amount: '₦75,000', date: '2026-10-06' },
-    { id: 2, type: 'Subscription Renewal', txnRef: 'TXN-8800', channel: 'Card', amount: '₦45,000', date: '2026-09-06' }
-  ]);
-
-  const paginateData = (items) => {
-    const filtered = items.filter(item => 
-      Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    const start = (currentPage - 1) * itemsPerPage;
-    return {
-      paginated: filtered.slice(start, start + itemsPerPage),
-      totalPages: Math.ceil(filtered.length / itemsPerPage) || 1
-    };
+  const sanitizeInput = (value: string) => {
+    return value.replace(/[<>]/g, '');
   };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row selection:bg-emerald-500 selection:text-white">
+  const handleInputChange = (field: string, value: string) => {
+    const sanitized = sanitizeInput(value);
+    setFormData(prev => ({ ...prev, [field]: sanitized }));
+  };
+
+  const selectPlanAndStart = (id: number, name: string) => {
+    setFormData(prev => ({ ...prev, planId: id, planName: name }));
+    setCurrentView('signup');
+    setSignupStep(1);
+  };
+
+  // Live Password Validation Criteria
+  const pwd = formData.password;
+  const hasLength = pwd.length >= 8;
+  const hasUppercase = /[A-Z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pwd);
+  const isPasswordValid = hasLength && hasUppercase && hasNumber && hasSymbol;
+
+  // Handle Tenant Registration Form Submission
+  const handleNextStep = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signupStep < 4) {
+      setSignupStep(signupStep + 1);
+    } else {
+      if (!isPasswordValid) return;
       
-      {/* Sidebar Navigation */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg"><Store className="w-6 h-6 text-white" /></div>
-            <div>
-              <span className="text-lg font-extrabold text-white">NderTech POS</span>
-              <span className="block text-[10px] text-emerald-400 uppercase tracking-widest font-semibold">Enterprise Hub</span>
-            </div>
-          </div>
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        setIsLoading(false);
 
-          <nav className="space-y-1 text-xs font-medium max-h-[75vh] overflow-y-auto pr-1">
-            {[
-              { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-              { id: 'pos', label: 'POS Terminal (Sales)', icon: <ShoppingCart className="w-4 h-4" /> },
-              { id: 'products', label: 'Products Page', icon: <Package className="w-4 h-4" /> },
-              { id: 'customers', label: 'Customers Page', icon: <Users className="w-4 h-4" /> },
-              { id: 'suppliers', label: 'Suppliers Page', icon: <Truck className="w-4 h-4" /> },
-              { id: 'purchases', label: 'Purchase Page', icon: <ShoppingBag className="w-4 h-4" /> },
-              { id: 'quotations', label: 'Quotation Page', icon: <FileText className="w-4 h-4" /> },
-              { id: 'invoices', label: 'Invoices & Billing', icon: <FileText className="w-4 h-4" /> },
-              { id: 'transactions', label: 'All Transactions', icon: <BarChart3 className="w-4 h-4" /> },
-              { id: 'reports', label: 'Reports (D/W/M)', icon: <BarChart3 className="w-4 h-4" /> },
-              { id: 'subscription', label: 'Subscription Plan', icon: <CreditCard className="w-4 h-4" /> },
-              { id: 'branches', label: 'Branches & Staff', icon: <Building className="w-4 h-4" /> }
-            ].map(tab => (
-              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setCurrentPage(1); setSearchTerm(''); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+        if (data.success) {
+          Swal.fire({
+            title: 'Success!',
+            text: data.message || `Tenant instance for ${formData.companyName} initialized successfully!`,
+            icon: 'success',
+            confirmButtonColor: '#059669',
+            background: '#0f172a',
+            color: '#f8fafc'
+          });
+          setCurrentView('signin');
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: data.message || 'Registration failed.',
+            icon: 'error',
+            confirmButtonColor: '#059669',
+            background: '#0f172a',
+            color: '#f8fafc'
+          });
+        }
+      } catch (err) {
+        setIsLoading(false);
+        console.error('Network error during registration:', err);
+        Swal.fire({
+          title: 'Connection Error',
+          text: 'Failed to connect to the backend server.',
+          icon: 'error',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      }
+    }
+  };
 
-        <div className="pt-4 border-t border-slate-800">
-          <button onClick={() => Swal.fire('Signed Out', 'You have been logged out.', 'info')} className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors">
-            <LogOut className="w-4 h-4" /><span>Sign Out</span>
+  // Handle User Sign-In Submission
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', ...signInData })
+      });
+      const data = await response.json();
+      setIsLoading(false);
+
+      if (data.success) {
+        Swal.fire({
+          title: 'Welcome Back!',
+          text: `Login successful. Welcome, ${data.user.name}.`,
+          icon: 'success',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      } else {
+        Swal.fire({
+          title: 'Access Denied',
+          text: data.message || 'Invalid email or password.',
+          icon: 'warning',
+          confirmButtonColor: '#059669',
+          background: '#0f172a',
+          color: '#f8fafc'
+        });
+      }
+    } catch (err) {
+      setIsLoading(false);
+      console.error('Sign-in error:', err);
+      Swal.fire({
+        title: 'Connection Error',
+        text: 'Failed to connect to backend sign-in service.',
+        icon: 'error',
+        confirmButtonColor: '#059669',
+        background: '#0f172a',
+        color: '#f8fafc'
+      });
+    }
+  };
+
+  const navigateTo = (view: 'landing' | 'signin' | 'signup' | 'forgot' | 'terms' | 'privacy' | 'disclaimer') => {
+    setCurrentView(view);
+    setMobileMenuOpen(false);
+    if (view === 'signup') setSignupStep(1);
+    window.scrollTo(0, 0);
+  };
+
+  const plans = [
+    {
+      id: 1,
+      name: "Starter Plan",
+      price: "₦15,000",
+      period: "per month",
+      desc: "Ideal for growing single-counter retail shops and boutiques.",
+      branches: "1 Store Branch",
+      usersPerBranch: "Up to 3 Users per Branch",
+      customers: "500 Saved Customers",
+      transactions: "1,000 Monthly Transactions",
+      highlight: false
+    },
+    {
+      id: 2,
+      name: "Professional Plan",
+      price: "₦45,000",
+      period: "per month",
+      desc: "Perfect for supermarkets and growing multi-branch retail chains.",
+      branches: "Up to 3 Store Branches",
+      usersPerBranch: "Up to 5 Users per Branch",
+      customers: "5,000 Saved Customers",
+      transactions: "10,000 Monthly Transactions",
+      highlight: true
+    },
+    {
+      id: 3,
+      name: "Enterprise Plan",
+      price: "₦120,000",
+      period: "per month",
+      desc: "Built for large wholesale distributors and corporate networks.",
+      branches: "Up to 10 Store Branches",
+      usersPerBranch: "Up to 10 Users per Branch",
+      customers: "50,000 Saved Customers",
+      transactions: "100,000 Monthly Transactions",
+      highlight: false
+    }
+  ];
+
+  const modules = [
+    { icon: <ShoppingCart className="w-8 h-8 text-emerald-400" />, title: "1. POS Terminal & Checkout", desc: "Lightning-fast touch-optimized checkout, barcode scanning, offline mode caching, split payments in ₦ Naira, and shift drawer management." },
+    { icon: <Package className="w-8 h-8 text-emerald-400" />, title: "2. Inventory & Stock Management", desc: "Real-time stock tracking across multi-locations, low stock automated alerts, barcode generation, and variant matrix tracking." },
+    { icon: <Users className="w-8 h-8 text-emerald-400" />, title: "3. CRM & Customer Loyalty", desc: "Detailed client profiles, lifetime value tracking in ₦, tiered rewards points, gift cards, and targeted marketing integration." },
+    { icon: <ShieldCheck className="w-8 h-8 text-emerald-400" />, title: "4. Staff Management & RBAC", desc: "Granular role-based access control, integrated shift time-clock tracking, employee sales performance, and automated commission logs." },
+    { icon: <Store className="w-8 h-8 text-emerald-400" />, title: "5. Multi-Store Enterprise Control", desc: "Centralized master dashboard managing multiple branches, inter-store inventory transfers, and localized ₦ pricing structures." },
+    { icon: <BarChart3 className="w-8 h-8 text-emerald-400" />, title: "6. Reports & Business Analytics", desc: "Real-time sales summaries in ₦, profit margin trends, Z-reports, and seamless CSV/Excel exports for accounting integration." },
+    { icon: <Layers className="w-8 h-8 text-emerald-400" />, title: "7. Integrations & Extensibility", desc: "Two-way e-commerce sync, Paystack/Flutterwave gateway APIs for ₦ transactions, and open REST webhooks." },
+    { icon: <FileText className="w-8 h-8 text-emerald-400" />, title: "8. Quotation & B2B Invoicing", desc: "Dynamic ₦ quotes sent via email, interactive client approval loops, one-click conversion to proforma invoices, and payment logging." }
+  ];
+
+  const workflowSteps = [
+    { step: "01", title: "Quotation Generation", desc: "Build itemized B2B quotations with custom tax, discounts, and ₦ pricing." },
+    { step: "02", title: "Client Review & Feedback", desc: "Email secure PDF links allowing clients to review, request edits, or digitally approve." },
+    { step: "03", title: "Proforma Conversion", desc: "Instantly convert approved quotations into proforma invoices without re-entering items." },
+    { step: "04", title: "Payment & Ledger Logging", desc: "Process payments via Paystack, transfer or cash in ₦, automatically updating ledgers." }
+  ];
+
+  // ================= VIEW: SIGN IN =================
+  if (currentView === 'signin') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6">
+        <div className="max-w-md mx-auto w-full pt-10">
+          <button onClick={() => navigateTo('landing')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
           </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 sm:p-8">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-slate-800 space-y-4 sm:space-y-0">
-          <div>
-            <h1 className="text-2xl font-black text-white capitalize">{activeTab.replace('_', ' ')}</h1>
-            <p className="text-xs text-slate-400">Professional multi-tenant SaaS management in Nigerian Naira (₦).</p>
-          </div>
-          <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-            User: Engr. Avela Nder Marcel
-          </span>
-        </header>
-
-        {/* Global Search Bar for Tabular Pages */}
-        {['products', 'customers', 'suppliers', 'purchases', 'quotations', 'invoices', 'transactions'].includes(activeTab) && (
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-              <input type="text" placeholder={`Search ${activeTab}...`} value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-white text-xs focus:outline-none focus:border-emerald-500" />
+          
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-6 text-emerald-400">
+              <Store className="w-6 h-6" />
             </div>
-          </div>
-        )}
+            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+            <p className="text-sm text-slate-400 mb-8">Sign in to your NderTech POS SaaS dashboard.</p>
 
-        {/* 1. OVERVIEW PAGE */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800"><p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Total Products</p><p className="text-3xl font-black text-white">{products.length}</p></div>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800"><p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Registered Customers</p><p className="text-3xl font-black text-white">{customers.length}</p></div>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800"><p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Active Quotations</p><p className="text-3xl font-black text-white">{quotations.length}</p></div>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800"><p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Subscription Tier</p><p className="text-2xl font-black text-emerald-400">Pro</p></div>
-          </div>
-        )}
-
-        {/* 2. POS TERMINAL WITH QUANTITY CONTROLS */}
-        {activeTab === 'pos' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <h3 className="text-lg font-bold text-white">Select Products to Add to Cart</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {products.map(p => (
-                  <div key={p.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{p.name}</h4>
-                      <p className="text-xs text-emerald-400 font-semibold">₦{p.price.toLocaleString()} ({p.stock} in stock)</p>
-                    </div>
-                    <button onClick={() => {
-                      const existing = cart.find(x => x.id === p.id);
-                      if (existing) {
-                        setCart(cart.map(x => x.id === p.id ? {...x, qty: x.qty + 1} : x));
-                      } else {
-                        setCart([...cart, {...p, qty: 1}]);
-                      }
-                    }} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white text-xs font-semibold flex items-center space-x-1">
-                      <Plus className="w-3.5 h-3.5" /><span>Add</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Cart Summary & Calculations with Quantities */}
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Checkout Cart ({cart.reduce((a,c) => a + c.qty, 0)} items)</h3>
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Select Customer</label>
-                <select value={selectedCustomerForSale} onChange={e => setSelectedCustomerForSale(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs">
-                  <option value="">Walk-in Customer</option>
-                  {customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email Address</label>
+                <div className="relative">
+                  <Mail className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input 
+                    type="email" 
+                    required 
+                    value={signInData.email}
+                    onChange={(e) => setSignInData({...signInData, email: e.target.value})}
+                    placeholder="name@company.com" 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {cart.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic py-4 text-center">Cart is empty. Click 'Add' on products.</p>
-                ) : (
-                  cart.map(item => (
-                    <div key={item.id} className="flex justify-between items-center text-xs text-slate-300 bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                      <div className="overflow-hidden pr-2">
-                        <p className="font-bold text-white truncate">{item.name}</p>
-                        <p className="text-emerald-400">₦{item.price.toLocaleString()} each</p>
-                      </div>
-                      <div className="flex items-center space-x-2 shrink-0">
-                        <button onClick={() => {
-                          if (item.qty > 1) {
-                            setCart(cart.map(x => x.id === item.id ? {...x, qty: x.qty - 1} : x));
-                          } else {
-                            setCart(cart.filter(x => x.id !== item.id));
-                          }
-                        }} className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300"><Minus className="w-3 h-3" /></button>
-                        <span className="font-bold text-white w-5 text-center">{item.qty}</span>
-                        <button onClick={() => {
-                          setCart(cart.map(x => x.id === item.id ? {...x, qty: x.qty + 1} : x));
-                        }} className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300"><Plus className="w-3 h-3" /></button>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">Password</label>
+                  <button type="button" onClick={() => navigateTo('forgot')} className="text-xs text-emerald-400 hover:underline">
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input 
+                    type={showSignInPassword ? "text" : "password"} 
+                    required 
+                    value={signInData.password}
+                    onChange={(e) => setSignInData({...signInData, password: e.target.value})}
+                    placeholder="••••••••" 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 pr-12 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowSignInPassword(!showSignInPassword)}
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors"
+                  >
+                    {showSignInPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all mt-4 flex items-center justify-center space-x-2"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>{isLoading ? 'Signing In...' : 'Sign In to Dashboard'}</span>
+              </button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-slate-400">
+              Don't have a store account?{' '}
+              <button onClick={() => navigateTo('signup')} className="text-emerald-400 font-semibold hover:underline">
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer className="text-center text-xs text-slate-600 py-4">&copy; 2026 NderTech Universal Services.</footer>
+      </div>
+    );
+  }
+
+  // ================= VIEW: CONVERSATIONAL SIGN UP (4 STEPS) =================
+  if (currentView === 'signup') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6 relative">
+        <div className="max-w-md mx-auto w-full pt-10">
+          <button onClick={() => navigateTo('landing')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </button>
+          
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+            {/* Step Indicator */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Step {signupStep} of 4</span>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">
+                {signupStep === 1 ? 'Selected Plan' : signupStep === 2 ? 'Personal Info' : signupStep === 3 ? 'Business Details' : 'Secure Account'}
+              </span>
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {signupStep === 1 && "Confirm your subscription"}
+              {signupStep === 2 && "Let's get to know you"}
+              {signupStep === 3 && "Tell us about your business"}
+              {signupStep === 4 && "Secure your SaaS instance"}
+            </h2>
+            <p className="text-sm text-slate-400 mb-8">
+              {signupStep === 1 && `You selected the ${formData.planName}. All 8 modules are included!`}
+              {signupStep === 2 && "Please enter your name and professional contact email."}
+              {signupStep === 3 && "We need your store name, phone number, and branch address."}
+              {signupStep === 4 && "Create a secure password with live strength verification."}
+            </p>
+
+            <form onSubmit={handleNextStep} className="space-y-4">
+              {signupStep === 1 && (
+                <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">{formData.planName}</span>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">Active Selection</span>
+                  </div>
+                  <p className="text-xs text-slate-400">Includes branch allocation management, cashier RBAC, and all 8 enterprise modules.</p>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const element = document.getElementById('pricing');
+                      if (element) element.scrollIntoView({ behavior: 'smooth' });
+                      navigateTo('landing');
+                    }} 
+                    className="text-xs text-emerald-400 hover:underline font-semibold block pt-1"
+                  >
+                    Change Plan Tier
+                  </button>
+                </div>
+              )}
+
+              {signupStep === 2 && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Full Name</label>
+                    <div className="relative">
+                      <User className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type="text" 
+                        required 
+                        value={formData.fullName}
+                        onChange={(e) => handleInputChange('fullName', e.target.value)}
+                        placeholder="Engr. Avela Marcel" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Work Email</label>
+                    <div className="relative">
+                      <Mail className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type="email" 
+                        required 
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="admin@ndertech.com" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {signupStep === 3 && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Company / Store Name</label>
+                    <div className="relative">
+                      <Building className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type="text" 
+                        required 
+                        value={formData.companyName}
+                        onChange={(e) => handleInputChange('companyName', e.target.value)}
+                        placeholder="NderTech Hub" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type="tel" 
+                        required 
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        placeholder="+234 800 000 0000" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Business Address</label>
+                    <div className="relative">
+                      <MapPin className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type="text" 
+                        required 
+                        value={formData.address}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        placeholder="Makurdi, Benue State, Nigeria" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {signupStep === 4 && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+                    <div className="relative">
+                      <Lock className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input 
+                        type={showSignUpPassword ? "text" : "password"} 
+                        required 
+                        value={formData.password}
+                        onChange={(e) => handleInputChange('password', e.target.value)}
+                        placeholder="••••••••" 
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 pr-12 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                        className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition-colors"
+                      >
+                        {showSignUpPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+
+                    <div className="mt-4 p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password Security Requirements:</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className={`flex items-center space-x-2 ${hasLength ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>At least 8 characters</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${hasUppercase ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>One uppercase letter</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${hasNumber ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>One number</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${hasSymbol ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>One special symbol</span>
+                        </div>
                       </div>
                     </div>
-                  ))
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        required
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded border-slate-800 bg-slate-950 text-emerald-600 focus:ring-emerald-500" 
+                      />
+                      <span className="text-xs text-slate-400 leading-relaxed">
+                        I agree to the{' '}
+                        <button type="button" onClick={() => setActiveLegalModal('terms')} className="text-emerald-400 hover:underline font-semibold">Terms & Conditions</button>{' '}
+                        and{' '}
+                        <button type="button" onClick={() => setActiveLegalModal('privacy')} className="text-emerald-400 hover:underline font-semibold">Privacy Policy</button>.
+                      </span>
+                    </label>
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center space-x-3 pt-4">
+                {signupStep > 1 && (
+                  <button 
+                    type="button" 
+                    onClick={() => setSignupStep(signupStep - 1)}
+                    disabled={isLoading}
+                    className="w-1/3 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition-all"
+                  >
+                    Back
+                  </button>
+                )}
+                <button 
+                  type="submit" 
+                  disabled={isLoading || (signupStep === 4 && (!agreedToTerms || !isPasswordValid))}
+                  className={`${signupStep > 1 ? 'w-2/3' : 'w-full'} py-3.5 rounded-xl ${(signupStep === 4 && (!agreedToTerms || !isPasswordValid)) ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'} font-semibold text-sm transition-all flex items-center justify-center space-x-2`}
+                >
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{isLoading ? 'Initializing...' : (signupStep === 4 ? 'Launch Tenant Instance' : 'Continue')}</span>
+                  {!isLoading && signupStep < 4 && <ArrowRight className="w-4 h-4" />}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-slate-400">
+              Already have an account?{' '}
+              <button onClick={() => navigateTo('signin')} className="text-emerald-400 font-semibold hover:underline">
+                Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer className="text-center text-xs text-slate-600 py-4">&copy; 2026 NderTech Universal Services.</footer>
+
+        {activeLegalModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-8 relative shadow-2xl max-h-[80vh] overflow-y-auto">
+              <button 
+                onClick={() => setActiveLegalModal(null)}
+                className="absolute top-6 right-6 text-slate-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <h3 className="text-xl font-bold text-white mb-4 capitalize">
+                {activeLegalModal === 'terms' ? 'Terms and Conditions' : 'Privacy Policy'}
+              </h3>
+              <div className="space-y-4 text-slate-300 text-sm leading-relaxed mb-6">
+                {activeLegalModal === 'terms' ? (
+                  <>
+                    <p>Welcome to NderTech POS & B2B Invoicing SaaS. By accessing or using our multi-tenant software platform, you agree to be bound by these Terms and Conditions.</p>
+                    <p><strong>1. SaaS Subscription & Account Usage:</strong> Subscribers are granted a non-exclusive license to utilize our POS terminal, inventory tracking, and quotation workflows. You are responsible for safeguarding your admin credentials.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>At NderTech Universal Services, we respect your privacy and protect your business data with industry-standard encryption protocols.</p>
+                    <p><strong>1. Information We Collect:</strong> We collect merchant account details, customer directory records, inventory catalogs, and transaction ledgers strictly necessary to operate your POS terminal.</p>
+                  </>
                 )}
               </div>
-
-              {(() => {
-                const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                const discountAmt = (subtotal * discountPercent) / 100;
-                const totalDue = subtotal - discountAmt;
-                const balance = Math.max(0, totalDue - downPayment);
-
-                return (
-                  <div className="space-y-3 pt-3 border-t border-slate-800 text-xs">
-                    <div className="flex justify-between text-slate-400"><span>Subtotal:</span><span>₦{subtotal.toLocaleString()}</span></div>
-                    <div className="flex justify-between items-center text-slate-400">
-                      <span>Discount (%):</span>
-                      <input type="number" min="0" max="100" value={discountPercent} onChange={e => setDiscountPercent(Number(e.target.value))} className="w-16 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-white text-right" />
-                    </div>
-                    <div className="flex justify-between items-center text-slate-400">
-                      <span>Down Payment (₦):</span>
-                      <input type="number" min="0" value={downPayment} onChange={e => setDownPayment(Number(e.target.value))} className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-white text-right" />
-                    </div>
-                    <div className="flex justify-between font-bold text-white text-sm pt-2 border-t border-slate-800"><span>Total Due:</span><span className="text-emerald-400">₦{totalDue.toLocaleString()}</span></div>
-                    <div className="flex justify-between font-bold text-amber-400 text-xs"><span>Balance Due:</span><span>₦{balance.toLocaleString()}</span></div>
-
-                    <button onClick={() => {
-                      if (cart.length === 0) return Swal.fire('Cart is empty', 'Please add items with quantities before checking out.', 'warning');
-                      const newSale = { id: Date.now(), ref: `POS-${Math.floor(1000 + Math.random()*9000)}`, customer: selectedCustomerForSale || 'Walk-in', items: cart.map(x => `${x.qty}x ${x.name}`).join(', '), subtotal, discount: discountAmt, totalDue, paid: downPayment, balance, date: new Date().toISOString().split('T')[0] };
-                      setSalesRecords([newSale, ...salesRecords]);
-                      setCart([]);
-                      setDownPayment(0);
-                      setDiscountPercent(0);
-                      Swal.fire('Success', 'Sale recorded successfully!', 'success');
-                    }} className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs mt-4">Complete Sale & Print Receipt</button>
-                  </div>
-                );
-              })()}
+              <button 
+                onClick={() => setActiveLegalModal(null)}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all"
+              >
+                Close & Return to Sign Up
+              </button>
             </div>
           </div>
         )}
+      </div>
+    );
+  }
 
-        {/* 3. PRODUCTS PAGE (CRUD) */}
-        {activeTab === 'products' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Product Catalog Management</h3>
-              <button onClick={() => setProductModal({ isOpen: true, editId: null, name: '', category: '', price: '', stock: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Product</span></button>
+  // ================= VIEW: FORGOTTEN PASSWORD =================
+  if (currentView === 'forgot') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6">
+        <div className="max-w-md mx-auto w-full pt-10">
+          <button onClick={() => navigateTo('signin')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Sign In</span>
+          </button>
+          
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-6 text-emerald-400">
+              <Mail className="w-6 h-6" />
             </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
+            <p className="text-sm text-slate-400 mb-8">Enter your work email address and we'll send you instructions to reset your password.</p>
 
-            {(() => {
-              const { paginated, totalPages } = paginateData(products);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Name</th><th className="p-4">Category</th><th className="p-4">Price (₦)</th><th className="p-4">Stock</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(p => (
-                        <tr key={p.id}>
-                          <td className="p-4 font-bold text-white">{p.name}</td>
-                          <td className="p-4">{p.category}</td>
-                          <td className="p-4 text-emerald-400">₦{p.price.toLocaleString()}</td>
-                          <td className="p-4">{p.stock}</td>
-                          <td className="p-4 text-right space-x-2">
-                            <button onClick={() => setProductModal({ isOpen: true, editId: p.id, name: p.name, category: p.category, price: p.price, stock: p.stock })} className="p-2 bg-slate-800 rounded text-emerald-400"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => setProducts(products.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {productModal.isOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-white">{productModal.editId ? 'Edit Product' : 'Add Product'}</h3>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    if (productModal.editId) {
-                      setProducts(products.map(x => x.id === productModal.editId ? {...x, name: productModal.name, category: productModal.category, price: Number(productModal.price), stock: Number(productModal.stock)} : x));
-                    } else {
-                      setProducts([...products, { id: Date.now(), name: productModal.name, category: productModal.category, price: Number(productModal.price), stock: Number(productModal.stock) }]);
-                    }
-                    setProductModal({ isOpen: false, editId: null, name: '', category: '', price: '', stock: '' });
-                  }} className="space-y-3">
-                    <input type="text" required placeholder="Product Name" value={productModal.name} onChange={e => setProductModal({...productModal, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="text" required placeholder="Category" value={productModal.category} onChange={e => setProductModal({...productModal, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="number" required placeholder="Price (₦)" value={productModal.price} onChange={e => setProductModal({...productModal, price: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="number" required placeholder="Stock Units" value={productModal.stock} onChange={e => setProductModal({...productModal, stock: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <div className="flex space-x-2 pt-2">
-                      <button type="button" onClick={() => setProductModal({ isOpen: false })} className="w-1/2 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
-                      <button type="submit" className="w-1/2 py-2 bg-emerald-600 text-white rounded-xl text-xs">Save</button>
-                    </div>
-                  </form>
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              Swal.fire({
+                title: 'Check Your Email',
+                text: 'Password reset instructions sent to your email!',
+                icon: 'success',
+                confirmButtonColor: '#059669',
+                background: '#0f172a',
+                color: '#f8fafc'
+              });
+              navigateTo('signin'); 
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Work Email</label>
+                <div className="relative">
+                  <Mail className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input type="email" required placeholder="admin@company.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* 4. CUSTOMERS PAGE */}
-        {activeTab === 'customers' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Customer Directory & History Ledger</h3>
-              <button onClick={() => setCustomerModal({ isOpen: true, editId: null, name: '', phone: '', email: '', address: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Customer</span></button>
+              <button type="submit" className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all mt-2">
+                Send Reset Instructions
+              </button>
+            </form>
+          </div>
+        </div>
+        <footer className="text-center text-xs text-slate-600 py-4">&copy; 2026 NderTech Universal Services.</footer>
+      </div>
+    );
+  }
+
+  // ================= VIEW: TERMS & CONDITIONS =================
+  if (currentView === 'terms') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
+        <div className="max-w-4xl mx-auto w-full px-6 py-12">
+          <button onClick={() => navigateTo('landing')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </button>
+          <h1 className="text-3xl font-extrabold text-white mb-6">Terms and Conditions</h1>
+          <div className="space-y-6 text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+            <p>Welcome to NderTech POS & B2B Invoicing SaaS. By accessing or using our multi-tenant software platform, you agree to be bound by these Terms and Conditions.</p>
+          </div>
+        </div>
+        <footer className="py-8 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">&copy; 2026 NderTech Universal Services.</footer>
+      </div>
+    );
+  }
+
+  // ================= VIEW: PRIVACY POLICY =================
+  if (currentView === 'privacy') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
+        <div className="max-w-4xl mx-auto w-full px-6 py-12">
+          <button onClick={() => navigateTo('landing')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </button>
+          <h1 className="text-3xl font-extrabold text-white mb-6">Privacy Policy</h1>
+          <div className="space-y-6 text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+            <p>At NderTech Universal Services, we respect your privacy and protect your business data with industry-standard encryption protocols.</p>
+          </div>
+        </div>
+        <footer className="py-8 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">&copy; 2026 NderTech Universal Services.</footer>
+      </div>
+    );
+  }
+
+  // ================= VIEW: DISCLAIMER =================
+  if (currentView === 'disclaimer') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
+        <div className="max-w-4xl mx-auto w-full px-6 py-12">
+          <button onClick={() => navigateTo('landing')} className="inline-flex items-center space-x-2 text-sm text-slate-400 hover:text-emerald-400 mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </button>
+          <h1 className="text-3xl font-extrabold text-white mb-6">Platform Disclaimer</h1>
+          <div className="space-y-6 text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+            <p>The information and software services provided by NderTech POS are on an "as is" and "as available" basis without warranties of any kind.</p>
+          </div>
+        </div>
+        <footer className="py-8 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">&copy; 2026 NderTech Universal Services.</footer>
+      </div>
+    );
+  }
+
+  // ================= VIEW: LANDING PAGE =================
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigateTo('landing')}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40">
+              <Store className="w-6 h-6 text-white" />
             </div>
-
-            {(() => {
-              const { paginated, totalPages } = paginateData(customers);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Name</th><th className="p-4">Phone</th><th className="p-4">Spent (₦)</th><th className="p-4">Balance Due</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(c => (
-                        <tr key={c.id}>
-                          <td className="p-4 font-bold text-white">{c.name}</td>
-                          <td className="p-4">{c.phone}</td>
-                          <td className="p-4 text-emerald-400">₦{c.spent.toLocaleString()}</td>
-                          <td className="p-4 text-amber-400">₦{c.balance.toLocaleString()}</td>
-                          <td className="p-4 text-right space-x-2">
-                            <button onClick={() => setSelectedCustomerHistory(c)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold">View Ledger</button>
-                            <button onClick={() => setCustomers(customers.filter(x => x.id !== c.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {selectedCustomerHistory && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4 overflow-y-auto">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-8 space-y-6 text-slate-100">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-white">Customer Activity Statement</h2>
-                      <p className="text-xs text-slate-400">{selectedCustomerHistory.name} | {selectedCustomerHistory.phone}</p>
-                    </div>
-                    <button onClick={() => window.print()} className="px-4 py-2 bg-emerald-600 rounded-xl text-xs font-semibold flex items-center space-x-2"><Printer className="w-4 h-4" /><span>Print Statement</span></button>
-                  </div>
-
-                  <div className="space-y-4 text-xs">
-                    <div className="grid grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl">
-                      <div><span className="text-slate-400">Total Spent:</span><p className="text-base font-bold text-emerald-400">₦{selectedCustomerHistory.spent.toLocaleString()}</p></div>
-                      <div><span className="text-slate-400">Current Balance Due:</span><p className="text-base font-bold text-amber-400">₦{selectedCustomerHistory.balance.toLocaleString()}</p></div>
-                    </div>
-
-                    <h4 className="font-bold text-white text-sm pt-2">Transaction History</h4>
-                    <div className="space-y-2">
-                      {salesRecords.filter(s => s.customer === selectedCustomerHistory.name).length > 0 ? (
-                        salesRecords.filter(s => s.customer === selectedCustomerHistory.name).map(s => (
-                          <div key={s.id} className="flex justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <span>{s.ref} ({s.date}) - {s.items}</span>
-                            <span className="text-emerald-400 font-bold">₦{s.totalDue.toLocaleString()}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-slate-500 italic">No transactions recorded for this customer yet.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <button onClick={() => setSelectedCustomerHistory(null)} className="w-full py-3 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Close Ledger</button>
-                </div>
-              </div>
-            )}
-
-            {customerModal.isOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-white">Add Customer</h3>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    setCustomers([...customers, { id: Date.now(), name: customerModal.name, phone: customerModal.phone, email: customerModal.email, address: customerModal.address, spent: 0, balance: 0 }]);
-                    setCustomerModal({ isOpen: false, editId: null, name: '', phone: '', email: '', address: '' });
-                  }} className="space-y-3">
-                    <input type="text" required placeholder="Full Name" value={customerModal.name} onChange={e => setCustomerModal({...customerModal, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="tel" required placeholder="Phone Number" value={customerModal.phone} onChange={e => setCustomerModal({...customerModal, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="email" required placeholder="Email Address" value={customerModal.email} onChange={e => setCustomerModal({...customerModal, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="text" required placeholder="Address" value={customerModal.address} onChange={e => setCustomerModal({...customerModal, address: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <div className="flex space-x-2 pt-2">
-                      <button type="button" onClick={() => setCustomerModal({ isOpen: false })} className="w-1/2 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
-                      <button type="submit" className="w-1/2 py-2 bg-emerald-600 text-white rounded-xl text-xs">Save</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 5. SUPPLIERS PAGE */}
-        {activeTab === 'suppliers' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Suppliers Directory Page</h3>
-              <button onClick={() => setSupplierModal({ isOpen: true, editId: null, name: '', contact: '', item: '', email: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add Supplier</span></button>
+            <div>
+              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
+                NderTech POS
+              </span>
+              <span className="block text-xs font-medium text-emerald-400 tracking-wider uppercase">Enterprise SaaS (₦)</span>
             </div>
-
-            {(() => {
-              const { paginated, totalPages } = paginateData(suppliers);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Supplier Name</th><th className="p-4">Contact</th><th className="p-4">Supplied Items</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(s => (
-                        <tr key={s.id}>
-                          <td className="p-4 font-bold text-white">{s.name}</td>
-                          <td className="p-4">{s.contact}</td>
-                          <td className="p-4">{s.item}</td>
-                          <td className="p-4 text-right"><button onClick={() => setSuppliers(suppliers.filter(x => x.id !== s.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {supplierModal.isOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-white">Add Supplier</h3>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    setSuppliers([...suppliers, { id: Date.now(), name: supplierModal.name, contact: supplierModal.contact, item: supplierModal.item, email: supplierModal.email }]);
-                    setSupplierModal({ isOpen: false, editId: null, name: '', contact: '', item: '', email: '' });
-                  }} className="space-y-3">
-                    <input type="text" required placeholder="Supplier Name" value={supplierModal.name} onChange={e => setSupplierModal({...supplierModal, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="tel" required placeholder="Contact Phone" value={supplierModal.contact} onChange={e => setSupplierModal({...supplierModal, contact: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="text" required placeholder="Supplied Items" value={supplierModal.item} onChange={e => setSupplierModal({...supplierModal, item: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <div className="flex space-x-2 pt-2">
-                      <button type="button" onClick={() => setSupplierModal({ isOpen: false })} className="w-1/2 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
-                      <button type="submit" className="w-1/2 py-2 bg-emerald-600 text-white rounded-xl text-xs">Save</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
           </div>
-        )}
 
-        {/* 6. PURCHASE PAGE */}
-        {activeTab === 'purchases' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Purchase Orders Page</h3>
-              <button onClick={() => setPurchaseModal({ isOpen: true, supplier: '', item: '', qty: '', cost: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>New Purchase</span></button>
-            </div>
+          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+            <a href="#features" className="hover:text-emerald-400 transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-emerald-400 transition-colors">Plans & Allocation</a>
+            <a href="#workflow" className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
+            <a href="#architecture" className="hover:text-emerald-400 transition-colors">Tech Stack</a>
+          </nav>
 
-            {(() => {
-              const { paginated, totalPages } = paginateData(purchases);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">PO Number</th><th className="p-4">Supplier</th><th className="p-4">Total Cost</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(p => (
-                        <tr key={p.id}>
-                          <td className="p-4 font-bold text-white">{p.poNo}</td>
-                          <td className="p-4">{p.supplier}</td>
-                          <td className="p-4 text-emerald-400">₦{p.total.toLocaleString()}</td>
-                          <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{p.status}</span></td>
-                          <td className="p-4 text-right"><button onClick={() => setPurchases(purchases.filter(x => x.id !== p.id))} className="p-2 bg-red-500/10 rounded text-red-400"><Trash2 className="w-4 h-4" /></button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {purchaseModal.isOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-white">Record Purchase Order</h3>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    setPurchases([...purchases, { id: Date.now(), poNo: `PO-${Math.floor(1000+Math.random()*9000)}`, supplier: purchaseModal.supplier, total: Number(purchaseModal.cost) * Number(purchaseModal.qty), date: new Date().toISOString().split('T')[0], status: 'Received' }]);
-                    setPurchaseModal({ isOpen: false, supplier: '', item: '', qty: '', cost: '' });
-                  }} className="space-y-3">
-                    <input type="text" required placeholder="Supplier Name" value={purchaseModal.supplier} onChange={e => setPurchaseModal({...purchaseModal, supplier: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="text" required placeholder="Item Description" value={purchaseModal.item} onChange={e => setPurchaseModal({...purchaseModal, item: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="number" required placeholder="Quantity" value={purchaseModal.qty} onChange={e => setPurchaseModal({...purchaseModal, qty: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="number" required placeholder="Unit Cost (₦)" value={purchaseModal.cost} onChange={e => setPurchaseModal({...purchaseModal, cost: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <div className="flex space-x-2 pt-2">
-                      <button type="button" onClick={() => setPurchaseModal({ isOpen: false })} className="w-1/2 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
-                      <button type="submit" className="w-1/2 py-2 bg-emerald-600 text-white rounded-xl text-xs">Save PO</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
+          <div className="hidden md:flex items-center space-x-4">
+            <button 
+              onClick={() => navigateTo('signin')}
+              className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+            >
+              Sign In
+            </button>
+            <button 
+              onClick={() => selectPlanAndStart(1, 'Starter Plan')}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5"
+            >
+              Get Started
+            </button>
           </div>
-        )}
 
-        {/* 7. QUOTATION PAGE */}
-        {activeTab === 'quotations' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Quotation & Proforma Page</h3>
-              <button onClick={() => setQuotationModal({ isOpen: true, client: '', items: '', amount: '' })} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Create Quotation</span></button>
-            </div>
-
-            {(() => {
-              const { paginated, totalPages } = paginateData(quotations);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Quote No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(q => (
-                        <tr key={q.id}>
-                          <td className="p-4 font-bold text-white">{q.quoteNo}</td>
-                          <td className="p-4">{q.client}</td>
-                          <td className="p-4 text-emerald-400">₦{q.amount.toLocaleString()}</td>
-                          <td className="p-4"><span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">{q.status}</span></td>
-                          <td className="p-4 text-right space-x-2">
-                            <button onClick={() => {
-                              setSalesRecords([{ id: Date.now(), ref: `POS-${Math.floor(1000+Math.random()*9000)}`, customer: q.client, items: q.items, subtotal: q.amount, discount: 0, totalDue: q.amount, paid: q.amount, balance: 0, date: new Date().toISOString().split('T')[0] }, ...salesRecords]);
-                              setQuotations(quotations.filter(x => x.id !== q.id));
-                              Swal.fire('Converted!', 'Quotation converted to Sale successfully.', 'success');
-                            }} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Convert to Sale</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {quotationModal.isOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-white">Create B2B Quotation</h3>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    setQuotations([...quotations, { id: Date.now(), quoteNo: `QT-${Math.floor(1000+Math.random()*9000)}`, client: quotationModal.client, items: quotationModal.items, amount: Number(quotationModal.amount), status: 'Pending' }]);
-                    setQuotationModal({ isOpen: false, client: '', items: '', amount: '' });
-                  }} className="space-y-3">
-                    <input type="text" required placeholder="Client Name" value={quotationModal.client} onChange={e => setQuotationModal({...quotationModal, client: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="text" required placeholder="Items Description" value={quotationModal.items} onChange={e => setQuotationModal({...quotationModal, items: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <input type="number" required placeholder="Total Amount (₦)" value={quotationModal.amount} onChange={e => setQuotationModal({...quotationModal, amount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-xs" />
-                    <div className="flex space-x-2 pt-2">
-                      <button type="button" onClick={() => setQuotationModal({ isOpen: false })} className="w-1/2 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
-                      <button type="submit" className="w-1/2 py-2 bg-emerald-600 text-white rounded-xl text-xs">Save Quote</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
+          <div className="md:hidden flex items-center">
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 hover:text-emerald-400 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* 9. INVOICES & BILLING PAGE */}
-        {activeTab === 'invoices' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-white">Invoices & Billing Page</h3>
-            {(() => {
-              const { paginated, totalPages } = paginateData(invoices);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Invoice No</th><th className="p-4">Client</th><th className="p-4">Amount</th><th className="p-4">Status</th><th className="p-4 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(inv => (
-                        <tr key={inv.id}>
-                          <td className="p-4 font-bold text-white">{inv.invNo}</td>
-                          <td className="p-4">{inv.client}</td>
-                          <td className="p-4 text-emerald-400">₦{inv.amount.toLocaleString()}</td>
-                          <td className="p-4"><span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded">{inv.status}</span></td>
-                          <td className="p-4 text-right space-x-2">
-                            <button onClick={() => Swal.fire('Sent!', `Invoice sent successfully.`, 'success')} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded text-xs font-semibold inline-flex items-center space-x-1"><Send className="w-3 h-3" /><span>Email</span></button>
-                            <button onClick={() => setInvoices(invoices.map(x => x.id === inv.id ? {...x, status: 'Paid'} : x))} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-semibold">Mark Paid</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* 10. ALL TRANSACTIONS PAGE */}
-        {activeTab === 'transactions' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">All Transactions Page</h3>
-              <div className="space-x-2">
-                <button onClick={() => Swal.fire('Exported', 'Downloaded.', 'success')} className="px-3 py-2 bg-slate-800 text-emerald-400 text-xs rounded-xl font-semibold inline-flex items-center space-x-1"><Download className="w-3.5 h-3.5" /><span>Excel</span></button>
-                <button onClick={() => window.print()} className="px-3 py-2 bg-slate-800 text-emerald-400 text-xs rounded-xl font-semibold inline-flex items-center space-x-1"><Printer className="w-3.5 h-3.5" /><span>PDF</span></button>
-              </div>
-            </div>
-
-            {(() => {
-              const { paginated, totalPages } = paginateData(transactions);
-              return (
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 overflow-x-auto space-y-4">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-950 uppercase text-xs text-slate-400">
-                      <tr><th className="p-4">Reference</th><th className="p-4">Type</th><th className="p-4">Channel</th><th className="p-4">Amount</th><th className="p-4">Date</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {paginated.map(t => (
-                        <tr key={t.id}>
-                          <td className="p-4 font-bold text-white">{t.txnRef}</td>
-                          <td className="p-4">{t.type}</td>
-                          <td className="p-4">{t.channel}</td>
-                          <td className="p-4 text-emerald-400">{t.amount}</td>
-                          <td className="p-4">{t.date}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-between items-center pt-2 text-xs text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <div className="space-x-2">
-                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronLeft className="w-4 h-4 inline" /></button>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 bg-slate-800 rounded disabled:opacity-50"><ChevronRight className="w-4 h-4 inline" /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* 11. REPORTS PAGE */}
-        {activeTab === 'reports' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-white">Daily, Weekly & Monthly Reports</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2"><span className="text-xs text-slate-400 uppercase font-semibold">Daily Report</span><p className="text-2xl font-bold text-white">₦75,000</p></div>
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2"><span className="text-xs text-slate-400 uppercase font-semibold">Weekly Report</span><p className="text-2xl font-bold text-white">₦525,000</p></div>
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2"><span className="text-xs text-slate-400 uppercase font-semibold">Monthly Report</span><p className="text-2xl font-bold text-white">₦2,350,000</p></div>
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-slate-900 border-b border-slate-800 px-6 py-6 space-y-4 shadow-2xl animate-in slide-in-from-top duration-200">
+            <nav className="flex flex-col space-y-4 text-base font-medium text-slate-300">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Features</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Plans & Allocation</a>
+              <a href="#workflow" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">B2B Workflow</a>
+              <a href="#architecture" onClick={() => setMobileMenuOpen(false)} className="hover:text-emerald-400 transition-colors">Tech Stack</a>
+            </nav>
+            <div className="pt-4 border-t border-slate-800 flex flex-col space-y-3">
+              <button 
+                onClick={() => navigateTo('signin')}
+                className="w-full py-3 text-center rounded-xl bg-slate-800 text-white font-semibold text-sm transition-colors"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => selectPlanAndStart(1, 'Starter Plan')}
+                className="w-full py-3 text-center rounded-xl bg-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-colors"
+              >
+                Get Started
+              </button>
             </div>
           </div>
         )}
+      </header>
 
-        {/* SUBSCRIPTION PLAN PAGE */}
-        {activeTab === 'subscription' && (
-          <div className="space-y-6 max-w-xl">
-            <h3 className="text-lg font-bold text-white">Subscription Management Page</h3>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                <div><span className="text-xs text-slate-400">Current Plan</span><h4 className="text-xl font-bold text-white">{currentPlan.name}</h4></div>
-                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">{currentPlan.status}</span>
+      <section className="relative pt-20 pb-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950/40 to-slate-950 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-8 animate-pulse">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Multi-Branch & Cashier RBAC Allocation in ₦ Naira</span>
+          </div>
+          
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            The Ultimate <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Multi-Branch POS</span> & B2B Suite
+          </h1>
+          
+          <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-normal">
+            Easily create physical store branches, allocate cashiers and administrators per branch, and manage real-time inventory across your enterprise.
+          </p>
+
+          <div className="mt-10 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button 
+              onClick={() => selectPlanAndStart(1, 'Starter Plan')}
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center space-x-2 transform hover:-translate-y-0.5"
+            >
+              <span>Launch Your SaaS Store</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <a 
+              href="#pricing"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-base transition-all text-center"
+            >
+              View Branch & User Tiers
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Subscription Plans Section with Branch & User Limits */}
+      <section id="pricing" className="py-24 bg-slate-950 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Multi-Store & Staff Allocation Tiers</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              Plans Based on Branches & Staff Allocation
+            </h2>
+            <p className="mt-4 text-slate-400 text-base">
+              All plans include <strong>all 8 enterprise modules</strong>. Select your tier based on your store branch network and cashier allocations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {plans.map((plan) => (
+              <div 
+                key={plan.id}
+                className={`relative p-8 rounded-3xl bg-slate-900 border ${plan.highlight ? 'border-emerald-500 shadow-2xl shadow-emerald-950/60 scale-105' : 'border-slate-800'} flex flex-col justify-between transition-all`}
+              >
+                {plan.highlight && (
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
+                    Most Popular
+                  </span>
+                )}
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                  <p className="text-sm text-slate-400 mb-6">{plan.desc}</p>
+                  <div className="flex items-baseline space-x-2 mb-6">
+                    <span className="text-4xl font-extrabold text-white">{plan.price}</span>
+                    <span className="text-xs text-slate-500">{plan.period}</span>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-slate-800 mb-8 text-sm text-slate-300">
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-semibold text-emerald-400">{plan.branches}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-semibold text-emerald-400">{plan.usersPerBranch}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{plan.customers}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{plan.transactions}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => selectPlanAndStart(plan.id, plan.name)}
+                  className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${plan.highlight ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}
+                >
+                  Get Started with {plan.name}
+                </button>
               </div>
-              <p className="text-xs text-slate-400">Renewal Date: {currentPlan.expiry}</p>
-              <div className="flex space-x-3 pt-2">
-                <button onClick={() => Swal.fire('Renewed!', '', 'success')} className="w-1/2 py-3 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Renew Plan</button>
-                <button onClick={() => Swal.fire('Upgrade', '', 'info')} className="w-1/2 py-3 bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold">Upgrade Tier</button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 8 Core Modules Grid */}
+      <section id="features" className="py-24 bg-slate-900/50 border-t border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              Packed with Advanced Enterprise Features
+            </h2>
+            <p className="mt-4 text-slate-400 text-base sm:text-lg">
+              Every tool your organization needs to manage branch networks, cashiers, and inventory.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {modules.map((mod, index) => (
+              <div 
+                key={index}
+                className="group relative p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-950/50 transform hover:-translate-y-1"
+              >
+                <div className="w-14 h-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
+                  {mod.icon}
+                </div>
+                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">
+                  {mod.title}
+                </h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  {mod.desc}
+                </p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" className="py-24 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold mb-4">
+              <Zap className="w-3.5 h-3.5" />
+              <span>B2B Procurement Pipeline</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              From Quotation to Cash in 4 Steps
+            </h2>
+            <p className="mt-4 text-slate-400 text-base">
+              Seamlessly bridge the gap between retail checkouts and corporate wholesale contracts with ₦ invoicing.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {workflowSteps.map((item, idx) => (
+              <div key={idx} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 relative">
+                <span className="text-3xl font-black text-emerald-500/30 absolute top-4 right-4">{item.step}</span>
+                <h3 className="text-base font-bold text-white mb-2 mt-4">{item.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture" className="py-20 bg-slate-900/30 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl font-bold text-white mb-8">Built on Enterprise-Grade Technology</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center space-x-3">
+              <Globe className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-semibold text-slate-200">React & Vite (SPA)</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center space-x-3">
+              <Server className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-semibold text-slate-200">Node.js API</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center space-x-3">
+              <Database className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-semibold text-slate-200">PostgreSQL (RLS)</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center space-x-3">
+              <RefreshCw className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-semibold text-slate-200">IndexedDB Offline Sync</span>
             </div>
           </div>
-        )}
+        </div>
+      </section>
 
-        {/* BRANCHES & STAFF */}
-        {activeTab === 'branches' && (
-          <div className="space-y-6"><h3 className="text-lg font-bold text-white">Branches & Staff Allocation</h3><div className="p-6 rounded-2xl bg-slate-900 border border-slate-800"><p className="text-xs text-slate-400">Active branches connected: 1</p></div></div>
-        )}
-      </main>
+      <footer className="mt-auto py-12 bg-slate-950 border-t border-slate-900 text-center text-sm text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+          <p>&copy; 2026 NderTech Universal Services. Built for High-Performance SaaS Commerce (₦).</p>
+          <div className="flex space-x-6 text-xs">
+            <button onClick={() => navigateTo('terms')} className="hover:text-emerald-400 transition-colors">Terms & Conditions</button>
+            <button onClick={() => navigateTo('privacy')} className="hover:text-emerald-400 transition-colors">Privacy Policy</button>
+            <button onClick={() => navigateTo('disclaimer')} className="hover:text-emerald-400 transition-colors">Disclaimer</button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
-
